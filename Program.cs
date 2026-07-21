@@ -104,7 +104,7 @@ public static class Program
 
             string deserializedUser = File.ReadAllText(jsonFile);
 
-            User readedUser = JsonSerializer.Deserialize<User>(deserializedUser);
+            User? readedUser = JsonSerializer.Deserialize<User>(deserializedUser);
 
             DrawText($"{readedUser.name}", Color.Green, false);
             DrawText(" | ", Color.Gray, false);
@@ -128,13 +128,59 @@ public static class Program
 
         Console.Clear();
 
-        newUser.name = TakeInput("Ingresa el nombre: ", Color.Yellow);
-        newUser.fandom = TakeInput("Ingresa el fandom: ", Color.Yellow);
-        newUser.lookedCharacters = TakeInput("Ingresa los roles buscados (separados por comas): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        newUser.age = Convert.ToInt32(TakeInput("Ingresa la edad: ", Color.Yellow));
-        newUser.pronauns = TakeInput("Ingresa los pronombres (separados por comas): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        string inp = "";
+        string[] inpa = [""];
+        int inpi = 0;
+        bool warning = false;
+
+        while (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp))
+        {
+            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
+            inp = TakeInput("Ingresa el nombre: ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp)) warning = true;
+        }
+
+        newUser.name = inp;
+
+        warning = false;
+        inp = "";
+
+        while (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp))
+        {
+            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
+            inp = TakeInput("Ingresa el fandom: ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp)) warning = true;
+        }
+
+        newUser.fandom = inp;
+
+        warning = false;
+        inp = "";
+
+        newUser.lookedCharacters = TakeInput("Ingresa los roles buscados (separados por comas, puede estar vacío): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        int.TryParse(TakeInput("Ingresa la edad: ", Color.Yellow), out inpi);
+
+        newUser.age = inpi;
+
+        while (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp))
+        {
+            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
+            inpa = TakeInput("Ingresa los pronombres (separados por comas): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            if (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp)) warning = true;
+        }
+
+        newUser.pronauns = inpa;
+
         string inputStreak = TakeInput("Ingresa la racha (de tenerla): ", Color.Yellow) ?? "0";
-        newUser.streak = string.IsNullOrWhiteSpace(inputStreak) ? 0 : Convert.ToInt32(inputStreak);
+
+        if (!string.IsNullOrEmpty(inputStreak))
+        {
+            int.TryParse(inputStreak, out inpi);
+        }
+        else inpi = 0;
+
+        newUser.streak = inpi;
         newUser.dateRegistered = DateOnly.FromDateTime(DateTime.Now);
 
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
@@ -165,7 +211,7 @@ public static class Program
 
         ColorSwitch(textColor);
 
-        string s = Console.ReadLine();
+        string s = Console.ReadLine() ?? "";
 
         Console.ResetColor();
 
@@ -186,13 +232,11 @@ public static class Program
             return;
         }
 
-        // Leemos solo las líneas válidas
         string[] lines = File.ReadAllLines(usersDatPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
 
         DrawText("SELECCIONA UN USUARIO:", Color.White);
         DrawText("");
 
-        // Mostramos la lista enumerada usando los nombres de users.dat
         for (int i = 0; i < lines.Length; i++)
         {
             string[] userData = lines[i].Split(',');
@@ -208,7 +252,6 @@ public static class Program
             return;
         }
 
-        // Obtenemos la ruta del JSON del usuario seleccionado (índice base 0)
         string[] selectedUserData = lines[selectedIndex - 1].Split(',');
         string jsonPath = selectedUserData[1];
 
@@ -218,9 +261,8 @@ public static class Program
             return;
         }
 
-        // Deserializamos el usuario actual
         string deserializedUser = File.ReadAllText(jsonPath);
-        User currentUser = JsonSerializer.Deserialize<User>(deserializedUser);
+        User? currentUser = JsonSerializer.Deserialize<User>(deserializedUser);
 
         DrawText($"Usuario seleccionado: {currentUser.name}", Color.White);
         DrawText("");
@@ -240,7 +282,6 @@ public static class Program
             DrawText("Racha reiniciada a 0.", Color.Red);
         }
 
-        // Guardamos los cambios actualizados en su archivo .json
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
         string updatedJson = JsonSerializer.Serialize(currentUser, options);
         File.WriteAllText(jsonPath, updatedJson);
@@ -260,7 +301,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___");
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|");
         DrawText("");
-        DrawText("UserDB v1.0 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v1.1 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {
@@ -271,9 +312,11 @@ public static class Program
             DrawText("");
             input = TakeInput();
 
+            int.TryParse(input, out int intinput);
+
             try
             {
-                switch (Convert.ToInt32(input))
+                switch (intinput)
                 {
                     case 1:
                         ShowUsers();

@@ -104,7 +104,7 @@ public static class Program
 
             string deserializedUser = File.ReadAllText(jsonFile);
 
-            User? readedUser = JsonSerializer.Deserialize<User>(deserializedUser);
+            User readedUser = JsonSerializer.Deserialize<User>(deserializedUser);
 
             DrawText($"{readedUser.name}", Color.Green, false);
             DrawText(" | ", Color.Gray, false);

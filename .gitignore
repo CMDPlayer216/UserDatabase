@@ -1,0 +1,9 @@
+# Carpetas de compilación e IDE
+bin/
+obj/
+publish/
+.vscode/
+
+# Archivos de datos e información sensible
+*.json
+*.dat

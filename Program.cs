@@ -292,11 +292,11 @@ public static class Program
         UserService.EnsureDirectoryExists();
         Console.Clear();
 
-        ConsoleHelper.DrawText(" _   _ ____  _____ ____    ____    _  _____  _    ____    _    ____  _____ ");
-        ConsoleHelper.DrawText("| | | / ___|| ____|  _ \\  |  _ \\  / \\|_   _|/ \\  | __ )  / \\  / ___|| ____|");
-        ConsoleHelper.DrawText("| | | \\___ \\|  _| | |_) | | | | |/ _ \\ | | / _ \\ |  _ \\ / _ \\ \\___ \\|  _|  ");
-        ConsoleHelper.DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___");
-        ConsoleHelper.DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|");
+        ConsoleHelper.DrawText(" _   _ ____  _____ ____    ____    _  _____  _    ____    _    ____  _____ ", Color.Yellow);
+        ConsoleHelper.DrawText("| | | / ___|| ____|  _ \\  |  _ \\  / \\|_   _|/ \\  | __ )  / \\  / ___|| ____|", Color.Yellow);
+        ConsoleHelper.DrawText("| | | \\___ \\|  _| | |_) | | | | |/ _ \\ | | / _ \\ |  _ \\ / _ \\ \\___ \\|  _|  ", Color.DarkYellow);
+        ConsoleHelper.DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
+        ConsoleHelper.DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         ConsoleHelper.DrawText("");
         ConsoleHelper.DrawText("UserDB v1.4 (STABLE) - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 

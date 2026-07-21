@@ -259,6 +259,8 @@ public static class Program
         DrawText("| | | \\___ \\|  _| | |_) | | | | |/ _ \\ | | / _ \\ |  _ \\ / _ \\ \\___ \\|  _|  ");
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___");
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|");
+        DrawText("");
+        DrawText("UserDB v1.0 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {

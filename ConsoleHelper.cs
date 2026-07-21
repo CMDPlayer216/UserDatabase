@@ -4,7 +4,7 @@ namespace _userdatabase.UserDatabase;
 
 public enum Color
 {
-    Default, White, Black, Yellow, Green, Cyan, Blue, DarkYellow, Red, Gray, DarkGreen, DarkGray
+    Default, White, Black, Yellow, Green, Cyan, Blue, DarkYellow, Red, Gray, DarkGreen, DarkGray, DarkRed
 }
 
 public static class ConsoleHelper
@@ -24,6 +24,7 @@ public static class ConsoleHelper
             Color.Gray => ConsoleColor.Gray,
             Color.DarkGreen => ConsoleColor.DarkGreen,
             Color.DarkGray => ConsoleColor.DarkGray,
+            Color.DarkRed => ConsoleColor.DarkRed,
             _ => ConsoleColor.White
         };
 

@@ -157,17 +157,34 @@ public static class Program
         warning = false;
         inp = "";
 
-        newUser.lookedCharacters = TakeInput("Ingresa los roles buscados (separados por comas, puede estar vacío): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        inpa = TakeInput("Ingresa los roles buscados (separados por comas, puede estar vacío): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-        int.TryParse(TakeInput("Ingresa la edad: ", Color.Yellow), out inpi);
+        if (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && (string.IsNullOrEmpty(inpa[0]) || string.IsNullOrWhiteSpace(inpa[0])))) inpa = ["Ninguno"];
+
+        newUser.lookedCharacters = inpa;
+
+        inpa = [""];
+
+        while (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp) || inpi == 0)
+        {
+            if (warning) DrawText("Esa edad no es valida!", Color.Red);
+            inp = TakeInput("Ingresa la edad: ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp)) warning = true;
+            if (!string.IsNullOrEmpty(inp) || !string.IsNullOrWhiteSpace(inp)) int.TryParse(inp, out inpi);
+        }
+
+        warning = false;
+        inp = "";
 
         newUser.age = inpi;
 
-        while (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp))
+        string[] s = [""];
+        
+        while (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && (string.IsNullOrEmpty(inpa[0]) || string.IsNullOrWhiteSpace(inpa[0]))))
         {
             if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
             inpa = TakeInput("Ingresa los pronombres (separados por comas): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            if (string.IsNullOrEmpty(inp) || string.IsNullOrWhiteSpace(inp)) warning = true;
+            if (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && (string.IsNullOrEmpty(inpa[0]) || string.IsNullOrWhiteSpace(inpa[0])))) warning = true;
         }
 
         newUser.pronauns = inpa;

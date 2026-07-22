@@ -40,10 +40,10 @@ El sistema almacena la información localmente mediante ficheros JSON individual
 
 ## 📂 Estructura de Datos y Almacenamiento
 
-El programa crea automáticamente el directorio de datos en la carpeta personal del usuario (`~/.userdatabase_data/` en Linux / `%USERPROFILE%\.userdatabase_data\` en Windows).
+El programa crea automáticamente el directorio de datos en la carpeta personal del usuario (`~/.userdb/` en Linux / `%USERPROFILE%\.userdb\` en Windows).
 
 ```text
-~/.userdatabase_data/
+~/.userdb/
 ├── users.dat              # Índice general (formato: Nombre,RutaArchivoJSON)
 ├── Gabriel.json           # Perfil individual en formato JSON
 ├── Gabriel1.json          # Autonumeración en caso de duplicidad de nombre

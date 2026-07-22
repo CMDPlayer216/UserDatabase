@@ -1,6 +1,6 @@
 using System;
 
-namespace _userdatabase.UserDatabase;
+namespace userdb;
 
 public enum Color
 {

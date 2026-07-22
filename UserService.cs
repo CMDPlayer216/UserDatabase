@@ -4,11 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace _userdatabase.UserDatabase;
+namespace userdb;
 
 public static class UserService
 {
-    public static string GPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".userdatabase_data");
+    public static string GPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".userdb");
     private static string UsersDatPath => Path.Combine(GPath, "users.dat");
 
     public static void EnsureDirectoryExists()

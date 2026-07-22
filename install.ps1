@@ -8,7 +8,7 @@ if (-not (Test-Path $installDir)) {
 }
 
 # 3. Descargar el ejecutable desde la Release de GitHub
-$downloadUrl = "https://github.com/tu_usuario/tu_repo/releases/latest/download/userdb-windows-x64.exe"
+$downloadUrl = "https://github.com/tu_usuario/tu_repo/releases/latest/download/userdb-win-x64.exe"
 Write-Host "Descargando UserDB..." -ForegroundColor Cyan
 Invoke-WebRequest -Uri $downloadUrl -OutFile $exePath
 

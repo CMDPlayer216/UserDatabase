@@ -1,22 +1,12 @@
-# 1. Definir la ruta de instalación local (ej. C:\Users\Nombre\AppData\Local\UserDB)
-$installDir = "$env:LOCALAPPDATA\UserDB"
-$exePath = "$installDir\userdb.exe"
+#!/bin/bash
 
-# 2. Crear el directorio si no existe
-if (-not (Test-Path $installDir)) {
-    New-Item -ItemType Directory -Path $installDir | Out-Null
-}
+mkdir -p ./publish/linux-x64
+mkdir -p ./publish/windows-x64
 
-# 3. Descargar el ejecutable desde la Release de GitHub
-$downloadUrl = "https://github.com/tu_usuario/tu_repo/releases/latest/download/userdb-windows-x64.exe"
-Write-Host "Descargando UserDB..." -ForegroundColor Cyan
-Invoke-WebRequest -Uri $downloadUrl -OutFile $exePath
+dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o ./publish/linux-x64
+chmod +x ./publish/linux-x64/userdb
+cp -f ./publish/linux-x64/userdb ~/Escritorio/userdb-linux-x64
 
-# 4. Agregar la carpeta al PATH del usuario (para poder usar 'userdb' desde cualquier terminal)
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$installDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$installDir", "User")
-    Write-Host "Se agregó UserDB al PATH del sistema." -ForegroundColor Green
-}
-
-Write-Host "¡Instalación completada! Abre una nueva terminal y escribe 'userdb'." -ForegroundColor Green
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/windows-x64
+chmod +x ./publish/windows-x64/userdb.exe
+cp -f ./publish/windows-x64/userdb.exe ~/Escritorio/userdb-windows-x64.exe

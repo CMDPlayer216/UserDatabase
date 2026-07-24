@@ -29,16 +29,16 @@ public static class UserService
         JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
         string userSerialized = JsonSerializer.Serialize(newUser, options);
 
-        string path = Path.Combine(GPath, $"{newUser.name}.json");
+        string path = Path.Combine(GPath, $"{newUser.userId}.json");
 
         if (File.Exists(path))
         {
             int count = 1;
-            for (int i = 1; File.Exists(Path.Combine(GPath, $"{newUser.name}{i}.json")); i++)
+            for (int i = 1; File.Exists(Path.Combine(GPath, $"{newUser.userId}{i}.json")); i++)
             {
                 count = i + 1;
             }
-            path = Path.Combine(GPath, $"{newUser.name}{count}.json");
+            path = Path.Combine(GPath, $"{newUser.userId}{count}.json");
         }
 
         File.WriteAllText(path, userSerialized);

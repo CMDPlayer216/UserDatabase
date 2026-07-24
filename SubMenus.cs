@@ -1,11 +1,12 @@
-using static userdb.ConsoleHelper;
 using System.Text.Json;
+using NanoidDotNet;
+using static userdb.ConsoleHelper;
 
 namespace userdb;
 
 public static class Menus
 {
-/// <summary>
+    /// <summary>
     /// Renderiza la tabla de usuarios registrados en consola con formato multilínea.
     /// </summary>
     public static void ShowUsers(bool clearConsole = true)
@@ -20,101 +21,7 @@ public static class Menus
             return;
         }
 
-        // Definición de anchos fijos para columnas
-        const int wId = 24;
-        const int wName = 25;
-        const int wFandom = 25;
-        const int wAge = 5;
-        const int wRoles = 20;
-        const int wAddRoles = 20;
-        const int wPronouns = 12;
-        const int wDate = 12;
-        const int wStreak = 6;
-
-        // Renderizado del encabezado
-        DrawText($"{Truncate("ID", wId),-wId}", Color.White, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("USUARIO", wName),-wName}", Color.Green, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("FANDOM", wFandom),-wFandom}", Color.White, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("EDAD", wAge),-wAge}", Color.Green, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("ROLES BUSCADOS", wRoles),-wRoles}", Color.White, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("ROLES ADICIONALES", wAddRoles),-wAddRoles}", Color.Green, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("PRONOMBRES", wPronouns),-wPronouns}", Color.White, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("FECHA REG.", wDate),-wDate}", Color.Green, false);
-        DrawText(" | ", Color.Gray, false);
-        DrawText($"{Truncate("RACHA", wStreak),-wStreak}", Color.White);
-
-        int totalWidth = wId + wName + wFandom + wAge + wRoles + wAddRoles + wPronouns + wDate + wStreak + 24;
-        DrawText(new string('=', totalWidth), Color.Gray);
-
-        // Iterar registros del índice
-        for (int i = 0; i < userLines.Length; i++)
-        {
-            string[] userData = userLines[i].Split(',');
-            if (userData.Length < 2) continue;
-
-            string jsonFile = userData[1];
-
-            try
-            {
-                User? readedUser = UserService.LoadUserFromJson(jsonFile);
-                if (readedUser == null) continue;
-
-                string[] roles = readedUser.lookedCharacters ?? Array.Empty<string>();
-                string[] addRoles = readedUser.additionalRoles ?? Array.Empty<string>();
-                string[] pronounsList = readedUser.pronouns ?? Array.Empty<string>();
-
-                if (roles.Length == 0) roles = new[] { "Ninguno" };
-                if (addRoles.Length == 0) addRoles = new[] { "-" };
-                if (pronounsList.Length == 0) pronounsList = new[] { "-" };
-
-                int maxLines = Math.Max(roles.Length, Math.Max(addRoles.Length, pronounsList.Length));
-
-                for (int line = 0; line < maxLines; line++)
-                {
-                    string idCol = (line == 0) ? Truncate(readedUser.userId, wId) : "";
-                    string nameCol = (line == 0) ? Truncate(readedUser.name, wName) : "";
-                    string fandomCol = (line == 0) ? Truncate(readedUser.fandom, wFandom) : "";
-                    string ageCol = (line == 0) ? readedUser.age.ToString() : "";
-                    string dateCol = (line == 0) ? readedUser.dateRegistered.ToString() : "";
-                    string streakCol = (line == 0) ? readedUser.streak.ToString() : "";
-
-                    string roleCol = (line < roles.Length) ? Truncate(roles[line], wRoles) : "";
-                    string addRoleCol = (line < addRoles.Length) ? Truncate(addRoles[line], wAddRoles) : "";
-                    string pronounCol = (line < pronounsList.Length) ? Truncate(pronounsList[line], wPronouns) : "";
-
-                    DrawText($"{idCol,-wId}", Color.White, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{nameCol,-wName}", Color.Green, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{fandomCol,-wFandom}", Color.White, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{ageCol,-wAge}", Color.Green, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{roleCol,-wRoles}", Color.White, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{addRoleCol,-wAddRoles}", Color.Green, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{pronounCol,-wPronouns}", Color.White, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{dateCol,-wDate}", Color.Green, false);
-                    DrawText(" | ", Color.Gray, false);
-                    DrawText($"{streakCol,-wStreak}", Color.White);
-                }
-
-                DrawText(new string('-', totalWidth), Color.DarkGray);
-            }
-            catch (JsonException)
-            {
-                DrawText($"[Archivo de usuario corrupto: {Path.GetFileName(jsonFile)}]", Color.Red);
-            }
-        }
+        Commands.ListUsers(true, false);
     }
 
     /// <summary>
@@ -122,8 +29,16 @@ public static class Menus
     /// </summary>
     public static void AddUser()
     {
-        User newUser = new User();
         Console.Clear();
+
+        string name;
+        string[] additionalRoles;
+        string fandom;
+        string[] lookedCharacters;
+        int age;
+        string[] pronouns;
+        int streak;
+        string userId;
 
         string inp = "";
         string[] inpa = Array.Empty<string>();
@@ -139,7 +54,7 @@ public static class Menus
             if (string.IsNullOrWhiteSpace(inp)) warning = true;
         }
 
-        newUser.name = inp;
+        name = inp;
         warning = false;
         inp = "";
 
@@ -149,7 +64,7 @@ public static class Menus
         if (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && string.IsNullOrWhiteSpace(inpa[0])))
             inpa = Array.Empty<string>();
 
-        newUser.additionalRoles = inpa;
+        additionalRoles = inpa;
 
         // --- FANDOM ---
         while (string.IsNullOrWhiteSpace(inp))
@@ -159,7 +74,7 @@ public static class Menus
             if (string.IsNullOrWhiteSpace(inp)) warning = true;
         }
 
-        newUser.fandom = inp;
+        fandom = inp;
         warning = false;
         inp = "";
 
@@ -169,7 +84,7 @@ public static class Menus
         if (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && string.IsNullOrWhiteSpace(inpa[0])))
             inpa = Array.Empty<string>();
 
-        newUser.lookedCharacters = inpa;
+        lookedCharacters = inpa;
 
         // --- EDAD ---
         while (string.IsNullOrWhiteSpace(inp) || inpi == 0)
@@ -180,7 +95,7 @@ public static class Menus
             if (!string.IsNullOrWhiteSpace(inp)) int.TryParse(inp, out inpi);
         }
 
-        newUser.age = inpi;
+        age = inpi;
         warning = false;
         inp = "";
 
@@ -193,7 +108,7 @@ public static class Menus
             if (inpa == null || inpa.Length == 0 || (inpa.Length == 1 && string.IsNullOrWhiteSpace(inpa[0]))) warning = true;
         }
 
-        newUser.pronouns = inpa;
+        pronouns = inpa;
 
         // --- RACHA ---
         string inputStreak = TakeInput("Ingresa la racha (de tenerla): ", Color.Yellow) ?? "0";
@@ -202,19 +117,18 @@ public static class Menus
         else
             inpi = 0;
 
-        newUser.streak = inpi;
+        streak = inpi;
 
         // --- USER ID ---
         string inputId = TakeInput("Ingresa el ID (Deja vacío para autogenerar): ", Color.Yellow);
+        inputId = string.Concat(inputId.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
         if (string.IsNullOrWhiteSpace(inputId))
-            inputId = Guid.NewGuid().ToString();
+            inputId = Nanoid.Generate(size: 12);
 
-        newUser.userId = inputId;
-        newUser.dateRegistered = DateOnly.FromDateTime(DateTime.Now);
+        userId = inputId;
 
         // Guardar usuario vía Servicio
-        UserService.SaveUser(newUser);
-        DrawText("Usuario agregado exitosamente!", Color.Green);
+        Commands.AddUser(name, additionalRoles, fandom, lookedCharacters, age, pronouns, streak, userId);
     }
 
     /// <summary>
@@ -325,38 +239,25 @@ public static class Menus
         }
 
         string inp = currentUser.name;
-        string[] inpa = currentUser.additionalRoles;
         int inpi = 0;
 
+        // --- NOMBRE DE USUARIO ---
         string newNameInput = TakeInput("Ingresa el nombre (deja vacío para conservar el original): ", Color.Yellow);
 
         if (!string.IsNullOrWhiteSpace(newNameInput))
         {
             string sanitizedName = string.Concat(newNameInput.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
 
-            string oldPath = jsonPath;
-            string newPath = Path.Combine(UserService.GPath, $"{sanitizedName}.json");
+            currentUser.name = sanitizedName;
 
-            if (oldPath != newPath)
-            {
-                if (File.Exists(oldPath))
-                {
-                    File.Move(oldPath, newPath);
-                }
-
-                jsonPath = newPath;
-                currentUser.name = sanitizedName;
-
-                lines[realindex] = $"{sanitizedName},{jsonPath}";
-                File.WriteAllLines(Path.Combine(UserService.GPath, "users.dat"), lines);
-            }
+            // Actualizamos users.dat con el nuevo nombre manteniendo la misma ruta jsonPath
+            lines[realindex] = $"{sanitizedName},{jsonPath}";
+            File.WriteAllLines(Path.Combine(UserService.GPath, "users.dat"), lines);
         }
 
         // --- ROLES ADICIONALES ---
         string[] roles = currentUser.additionalRoles;
-
         bool erresable = true;
-
         bool loop = true;
 
         while (loop)
@@ -400,7 +301,7 @@ public static class Menus
 
                     while (inpi <= 0 || inpi > roles.Length)
                     {
-                        if (warn == true) DrawText("Ese rol no existe!");
+                        if (warn) DrawText("Ese rol no existe!");
                         int.TryParse(TakeInput("Selecciona el índice del rol: "), out inpi);
                         if (inpi <= 0 || inpi > roles.Length) warn = true;
                     }
@@ -419,7 +320,7 @@ public static class Menus
             }
         }
 
-
+        // --- FANDOM ---
         Console.Clear();
         inp = TakeInput($"Ingresa el fandom (Actual: {currentUser.fandom}, deja vacío para conservar): ", Color.Yellow);
         if (!string.IsNullOrWhiteSpace(inp))
@@ -429,9 +330,7 @@ public static class Menus
 
         // --- ROLES BUSCADOS ---
         roles = currentUser.lookedCharacters;
-
         erresable = true;
-
         loop = true;
 
         while (loop)
@@ -475,7 +374,7 @@ public static class Menus
 
                     while (inpi <= 0 || inpi > roles.Length)
                     {
-                        if (warn == true) DrawText("Ese rol no existe!");
+                        if (warn) DrawText("Ese rol no existe!");
                         int.TryParse(TakeInput("Selecciona el índice del rol: "), out inpi);
                         if (inpi <= 0 || inpi > roles.Length) warn = true;
                     }
@@ -504,9 +403,7 @@ public static class Menus
 
         // --- PRONOMBRES ---
         string[] pronouns = currentUser.pronouns;
-
         erresable = true;
-
         loop = true;
 
         while (loop)
@@ -542,7 +439,7 @@ public static class Menus
 
                     while (inpi <= 0 || inpi > pronouns.Length)
                     {
-                        if (warn == true) DrawText("Ese pronombre no existe!");
+                        if (warn) DrawText("Ese pronombre no existe!");
                         int.TryParse(TakeInput("Selecciona el índice del pronombre: "), out inpi);
                         if (inpi <= 0 || inpi > pronouns.Length) warn = true;
                     }
@@ -569,16 +466,83 @@ public static class Menus
             currentUser.streak = inpi;
         }
 
-        // --- USER ID ---
+        // --- USER ID Y RENOMBRADO DE ARCHIVO .JSON ---
         Console.Clear();
         inp = TakeInput($"Ingresa la ID (Actual: {currentUser.userId}, deja vacío para conservar): ", Color.Yellow);
-        if (!string.IsNullOrWhiteSpace(inp))
+        if (!string.IsNullOrWhiteSpace(inp) && inp != currentUser.userId)
         {
-            currentUser.userId = inp;
+            string newId = string.Concat(inp.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
+            string oldPath = jsonPath;
+            string newPath = Path.Combine(UserService.GPath, $"{newId}.json");
+
+            if (File.Exists(newPath) && newPath != oldPath)
+            {
+                int count = 1;
+                while (File.Exists(Path.Combine(UserService.GPath, $"{newId}{count}.json")))
+                {
+                    count++;
+                }
+                newId = $"{newId}{count}";
+                newPath = Path.Combine(UserService.GPath, $"{newId}.json");
+            }
+
+            if (File.Exists(oldPath) && oldPath != newPath)
+            {
+                File.Move(oldPath, newPath);
+            }
+
+            currentUser.userId = newId;
+            jsonPath = newPath;
+
+            lines[realindex] = $"{currentUser.name},{jsonPath}";
+            File.WriteAllLines(Path.Combine(UserService.GPath, "users.dat"), lines);
         }
 
         // Guardar usuario vía Servicio
         UserService.UpdateUserJson(jsonPath, currentUser);
         DrawText("¡Usuario modificado exitosamente!", Color.Green);
     }
+    public static void RemoveUser()
+    {
+        Console.Clear();
+
+        string[] lines = UserService.GetUserIndexLines();
+
+        if (lines.Length == 0)
+        {
+            DrawText("No hay usuarios registrados para eliminar.", Color.Red);
+            return;
+        }
+
+        DrawText("SELECCIONA UN USUARIO:", Color.White);
+        DrawText("");
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string[] userData = lines[i].Split(',');
+            DrawText($"{i + 1}. {userData[0]}", Color.Yellow);
+        }
+
+        DrawText("");
+        string inputSelection = TakeInput("Ingresa el numero del usuario: ");
+
+        if (!int.TryParse(inputSelection, out int selectedIndex) || selectedIndex < 1 || selectedIndex > lines.Length)
+        {
+            DrawText("Seleccion invalida.", Color.Red);
+            return;
+        }
+
+        string[] selectedUserData = lines[selectedIndex - 1].Split(',');
+
+        User? user = UserService.LoadUserFromJson(selectedUserData[1]);
+
+        if (user == null)
+        {
+            DrawText($"Error cargando el archivo {selectedUserData[1]}");
+            return;
+        }
+
+        Commands.DeleteUser(user.userId);
+    }
+
 }

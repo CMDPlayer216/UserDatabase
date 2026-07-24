@@ -1,8 +1,8 @@
-# UserDB v2.0 (STABLE)
+# UserDB v3.0
 
-**UserDB** es una herramienta de línea de comandos (CLI) desarrollada en C# / .NET para la gestión ligera y estructurada de perfiles de usuario, roles, fandoms y seguimiento de rachas (streaks) diarias. 
+**UserDB** es una herramienta de línea de comandos (CLI) desarrollada en C# / .NET para la gestión ligera, rápida y estructurada de perfiles de usuario, roles, fandoms, pronombres y seguimiento de rachas (*streaks*) diarias.
 
-El sistema almacena la información localmente mediante ficheros JSON individuales para cada usuario y un índice general `.dat`, ofreciendo una interfaz visual en consola formateada con colores y tablas multilínea.
+Funciona tanto de forma interactiva por menús como a través de comandos CLI directos. La información se almacena de forma local mediante archivos JSON individuales por usuario y un índice central `.dat`, ofreciendo una interfaz visual en consola con colores y tablas multilínea.
 
 ---
 
@@ -20,21 +20,26 @@ El sistema almacena la información localmente mediante ficheros JSON individual
 
 ## 🚀 Características Principales
 
-- **Modificación Interactiva de Usuarios (NUEVO v2.0)**: Módulo dinámico para editar perfiles existentes, renombrar archivos JSON en tiempo real actualizando el índice, y gestionar elementos de arreglos de forma interactiva (añadir/eliminar roles o pronombres).
-- **Estructura de Datos Limpia**: Arreglos opcionales vacíos por defecto (`Array.Empty<string>()`) para un manejo de datos consistente sin etiquetas innecesarias.
-- **Tabla Multilínea en Consola**: Renderizado dinámico con ajuste de columnas para arrays de roles buscados, roles adicionales y pronombres.
+- **Modo CLI Directo y Modo Interactivo**: Puedes ejecutar el programa sin argumentos para abrir el menú interactivo o usar subcomandos (`list`, `add`, `modify`, `remove`, `show`) para automatización o scripts.
+- **Visualización en Tabla o Texto**: Renderizado dinámico en consola formateado con columnas adaptativas para arreglos multilínea (roles, pronombres, etc.) o volcado en formato raw.
+- **Gestión Completa de Perfiles**:
+  - Campos soportados: Nombre, ID, Fandom, Edad, Pronombres, Roles Buscados, Roles Adicionales, Status, Fecha de Registro y Racha (*Streak*).
+  - Manejo inteligente de arreglos (añadir/eliminar elementos de forma individual o mediante valores separados por comas).
 - **Sistema de Rachas (Streaks)**: Módulo interactivo para verificar la actividad diaria de un usuario e incrementar o reiniciar su contador.
-- **Persistencia JSON Local**: Cada perfil se guarda de forma independiente en un archivo `.json` formateado, evitando colisiones de nombres mediante numeración automática.
-- **Indexación Rápida**: Mantenimiento de un archivo `users.dat` que actúa como índice central de rutas.
-- **Soporte Cross-Platform**: Scripts de compilación unificados y scripts de instalación automática para Linux y Windows (`install.sh` e `install.bat`).
+- **Persistencia JSON Local**: Cada perfil se guarda de forma independiente en un archivo `.json` formateado dentro de `~/.userdb/`, con generación de IDs vía NanoID y control para evitar duplicados.
+- **Indexación Rápida**: Mantenimiento automático de un archivo `users.dat` que actúa como índice central.
+- **Multiplataforma**: Compatible con Linux (`linux-x64`) y Windows (`win-x64`).
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
 - **Lenguaje**: C# (.NET 8.0+)
-- **Librerías**: `System.Text.Json` para serialización
-- **Compilación**: Target nativo `linux-x64` y `win-x64` con `PublishSingleFile`
+- **Librerías**:
+  - `System.CommandLine` para la interfaz de comandos CLI.
+  - `NanoidDotNet` para la generación de identificadores únicos (NanoID).
+  - `System.Text.Json` para serialización y desearialización de datos.
+- **Compilación**: Ejecutables nativos aislados (*self-contained*) para `linux-x64` y `win-x64`.
 
 ---
 
@@ -45,17 +50,16 @@ El programa crea automáticamente el directorio de datos en la carpeta personal 
 ```text
 ~/.userdb/
 ├── users.dat              # Índice general (formato: Nombre,RutaArchivoJSON)
-├── Gabriel.json           # Perfil individual en formato JSON
-├── Gabriel1.json          # Autonumeración en caso de duplicidad de nombre
+├── V1StG2pL9qRt.json      # Perfil individual guardado por su userId (NanoID)
 └── ...
 ```
 
-### Ejemplo de esquema JSON (`User.json`)
+### Ejemplo de esquema JSON (`<userId>.json`)
 
 ```json
 {
   "name": "Gabriel",
-  "userId": "d7a4b12c-9e23-4567-89ab-cdef01234567",
+  "userId": "V1StG2pL9qRt",
   "additionalRoles": [
     "Dev",
     "Admin"
@@ -69,8 +73,9 @@ El programa crea automáticamente el directorio de datos en la carpeta personal 
   "pronouns": [
     "he/him"
   ],
-  "dateRegistered": "2026-07-21",
-  "streak": 5
+  "dateRegistered": "2026-07-23",
+  "streak": 5,
+  "status": "Activo"
 }
 ```
 
@@ -80,13 +85,13 @@ El programa crea automáticamente el directorio de datos en la carpeta personal 
 
 ### Prerrequisitos
 
-Tener instalado el SDK de .NET:
+Tener instalado el SDK de .NET 8.0+:
 
 ```bash
 dotnet --version
 ```
 
-### Exportar Binarios (Linux & Windows)
+### Exportar Binarios (Linux)
 
 Puedes ejecutar el script unificado de exportación para compilar ambas plataformas de forma aislada:
 
@@ -95,7 +100,7 @@ chmod +x export.sh
 ./export.sh
 ```
 
-Esto generará los ejecutables comprimidos (*self-contained*) en `./publish/linux-x64/` y `./publish/windows-x64/`.
+Esto generará los ejecutables comprimidos en `./publish/linux-x64/` y `./publish/windows-x64/` además de copiarlos al escritorio.
 
 ### Instalación Rápida
 
@@ -104,29 +109,101 @@ Esto generará los ejecutables comprimidos (*self-contained*) en `./publish/linu
   chmod +x install.sh
   ./install.sh
   ```
-  *(Copia el binario a `~/.local/bin/userdb`)*
+  *(Descarga o mueve el binario a `~/.local/bin/userdb` y lo agrega a tu PATH)*
 
-- **En Windows:**
-  Ejecuta el script `install.bat` en tu terminal o con doble clic.
-  *(Instala el ejecutable en `%LOCALAPPDATA%\userdb` y lo añade automáticamente al `PATH` del usuario)*
+- **En Windows (PowerShell):**
+  ```powershell
+  .\install.ps1
+  ```
+  *(Instala el ejecutable en `%LOCALAPPDATA%\UserDB` y configura las variables de entorno)*
 
 ---
 
 ## 📖 Modo de Uso
 
-Una vez instalado, ejecuta la herramienta en tu terminal:
+### 1. Modo Interactivo
+
+Si ejecutas el comando sin argumentos, entrarás al menú guiado en consola:
 
 ```bash
 userdb
 ```
 
-### Opciones del Menú
+**Opciones disponibles:**
+1. **Mostrar usuarios**: Despliega la tabla ASCII interactiva con todos los usuarios registrados.
+2. **Agregar un usuario**: Formulario interactivo paso a paso con validaciones.
+3. **Verificar un usuario**: Revisa y actualiza la racha diaria de un usuario seleccionado.
+4. **Modificar un usuario**: Menú dinámico para editar campos personales y gestionar listas (añadir o eliminar roles/pronombres).
+5. **Eliminar usuario**: Selecciona y borra un perfil previa confirmación.
+6. **Salir**: Cierra la aplicación.
 
-1. **Mostrar usuarios**: Despliega la tabla ASCII interactiva con todos los usuarios registrados y sus métricas.
-2. **Agregar un usuario**: Formulario interactivo en consola con validaciones de tipo y campos obligatorios.
-3. **Modificar un usuario**: Menú interactivo para editar datos personales, renombrar perfiles y gestionar arreglos (roles, pronombres).
-4. **Verificar un usuario**: Selecciona un perfil por su índice y marca si cumplió su actividad del día para subir o reiniciar su racha.
-5. **Salir**: Cierra la aplicación.
+---
+
+### 2. Modo de Línea de Comandos (CLI)
+
+UserDB permite realizar todas las operaciones directamente mediante flags y subcomandos.
+
+#### 🔹 Listar Usuarios (`list`)
+```bash
+# Mostrar usuarios formateados en tabla ASCII
+userdb list --table
+
+# Mostrar únicamente el archivo de índice plano
+userdb list --raw
+```
+
+#### 🔹 Agregar Usuario (`add`)
+```bash
+userdb add -n "Gabriel" -f "Cyberpunk" -A 18 -p "he/him" -a "Dev,Admin" -l "V,Johnny" -s 3 -S "Activo"
+```
+*Parámetros:*
+- `-n, --name` (Requerido): Nombre del usuario.
+- `-f, --fandom` (Requerido): Fandom al que pertenece.
+- `-A, --age` (Requerido): Edad del usuario.
+- `-p, --pronouns` (Requerido): Pronombres (separados por comas si son varios).
+- `-a, --additional-roles`: Roles adicionales (separados por comas).
+- `-l, --looked-characters`: Personajes buscados (separados por comas).
+- `-s, --streak`: Racha inicial (por defecto `0`).
+- `-u, --user-id`: ID personalizado (por defecto se genera un NanoID de 12 caracteres).
+- `-S, --status`: Estado del usuario (por defecto `"Activo"`).
+
+#### 🔹 Modificar Usuario (`modify`)
+```bash
+# Cambiar nombre y sumar un rol adicional a un usuario existente
+userdb modify -u "V1StG2pL9qRt" -n "Gabriel (Editado)" -a "Moderador"
+
+# Eliminar un personaje buscado y actualizar el status
+userdb modify -u "V1StG2pL9qRt" -L "V" -S "Inactivo"
+```
+*Parámetros principales:*
+- `-u, --source-user` (Requerido): ID del usuario a modificar.
+- `-n, --name`: Nuevo nombre.
+- `-f, --fandom`: Nuevo fandom.
+- `-A, --age`: Nueva edad.
+- `-s, --streak`: Nueva racha.
+- `-U, --user-id`: Nuevo ID para reasignar al usuario.
+- `-S, --status`: Nuevo status.
+- `-a, --add-additional-roles` / `-r, --remove-additional-roles`: Añadir / eliminar roles adicionales.
+- `-l, --add-looked-characters` / `-L, --remove-looked-characters`: Añadir / eliminar personajes buscados.
+- `-p, --add-pronouns` / `-P, --remove-pronouns`: Añadir / eliminar pronombres.
+
+#### 🔹 Ver Detalle de Usuario (`show`)
+```bash
+# Ver información detallada en consola
+userdb show -u "V1StG2pL9qRt"
+
+# Ver el contenido directamente en formato JSON
+userdb show -u "V1StG2pL9qRt" --raw
+```
+
+#### 🔹 Eliminar Usuario (`remove`)
+```bash
+# Eliminar pidiendo confirmación
+userdb remove -u "V1StG2pL9qRt"
+
+# Eliminar sin pedir confirmación
+userdb remove -u "V1StG2pL9qRt" --noconfirm
+```
 
 ---
 

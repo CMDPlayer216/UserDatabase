@@ -36,6 +36,7 @@ static class Commands
             const int wPronouns = 12;
             const int wDate = 12;
             const int wStreak = 6;
+            const int wStatus = 15;
 
             // Renderizado del encabezado
             DrawText($"{Truncate("ID", wId),-wId}", Color.White, false);
@@ -54,9 +55,11 @@ static class Commands
             DrawText(" | ", Color.Gray, false);
             DrawText($"{Truncate("FECHA REG.", wDate),-wDate}", Color.Green, false);
             DrawText(" | ", Color.Gray, false);
-            DrawText($"{Truncate("RACHA", wStreak),-wStreak}", Color.White);
+            DrawText($"{Truncate("RACHA", wStreak),-wStreak}", Color.White, false);
+            DrawText(" | ", Color.Gray, false);
+            DrawText($"{Truncate("STATUS", wStatus),-wStatus}", Color.Green);
 
-            int totalWidth = wId + wName + wFandom + wAge + wRoles + wAddRoles + wPronouns + wDate + wStreak + 24;
+            int totalWidth = wId + wName + wFandom + wAge + wRoles + wAddRoles + wPronouns + wDate + wStreak + wStatus + 27;
             DrawText(new string('=', totalWidth), Color.Gray);
 
             // Iterar registros del índice
@@ -90,6 +93,7 @@ static class Commands
                         string ageCol = (line == 0) ? readedUser.age.ToString() : "";
                         string dateCol = (line == 0) ? readedUser.dateRegistered.ToString() : "";
                         string streakCol = (line == 0) ? readedUser.streak.ToString() : "";
+                        string statusCol = (line == 0) ? Truncate(readedUser.status ?? "-", wStatus) : "";
 
                         string roleCol = (line < roles.Length) ? Truncate(roles[line], wRoles) : "";
                         string addRoleCol = (line < addRoles.Length) ? Truncate(addRoles[line], wAddRoles) : "";
@@ -111,7 +115,9 @@ static class Commands
                         DrawText(" | ", Color.Gray, false);
                         DrawText($"{dateCol,-wDate}", Color.Green, false);
                         DrawText(" | ", Color.Gray, false);
-                        DrawText($"{streakCol,-wStreak}", Color.White);
+                        DrawText($"{streakCol,-wStreak}", Color.White, false);
+                        DrawText(" | ", Color.Gray, false);
+                        DrawText($"{statusCol,-wStatus}", Color.Green);
                     }
 
                     DrawText(new string('-', totalWidth), Color.DarkGray);
@@ -122,10 +128,8 @@ static class Commands
                 }
             }
         }
-
         else
         {
-
             foreach (string userline in userLines)
             {
                 string[] user = userline.Split(',');
@@ -134,7 +138,7 @@ static class Commands
         }
     }
 
-    public static void AddUser(string name, string[] additionalRoles, string fandom, string[] lookedCharacters, int age, string[] pronouns, int streak, string id)
+    public static void AddUser(string name, string[] additionalRoles, string fandom, string[] lookedCharacters, int age, string[] pronouns, int streak, string id, string status)
     {
         User newUser = new User();
         newUser.name = name;
@@ -144,14 +148,16 @@ static class Commands
         newUser.age = age;
         newUser.pronouns = pronouns;
         newUser.streak = streak;
+        newUser.status = status;
         if (id == "") id = Nanoid.Generate(size: 10);
         newUser.userId = id;
         newUser.dateRegistered = DateOnly.FromDateTime(DateTime.Now);
+        newUser.status = status;
         SaveUser(newUser);
         DrawText("Usuario agregado exitosamente!", Color.Green);
     }
 
-    public static void ModifyUser(string userId, string newName, string[] additionalRolesToAdd, string newFandom, string[] lookedCharactersToAdd, int newAge, string[] pronounsToAdd, int newStreak, string newId, string[] additionalRolesToRemove, string[] lookedCharactersToRemove, string[] pronounsToRemove)
+    public static void ModifyUser(string userId, string newName, string[] additionalRolesToAdd, string newFandom, string[] lookedCharactersToAdd, int newAge, string[] pronounsToAdd, int newStreak, string newId, string[] additionalRolesToRemove, string[] lookedCharactersToRemove, string[] pronounsToRemove, string newStatus)
     {
         User? user = LoadUserFromJson(Path.Combine(GPath, $"{userId}.json"));
 
@@ -232,6 +238,8 @@ static class Commands
             user.userId = newId;
         }
 
+        if (!string.IsNullOrWhiteSpace(newStatus)) user.status = newStatus;
+
         UpdateUserJson(Path.Combine(GPath, $"{userId}.json"), user);
         DrawText("Usuario modificado con éxito!", Color.Green);
     }
@@ -270,5 +278,31 @@ static class Commands
         }
 
         File.WriteAllLines(Path.Combine(GPath, "users.dat"), userIndex.ToArray());
+    }
+    public static void Show(string userId, bool isRaw = false)
+    {
+        string userPath = Path.Combine(GPath, $"{userId}.json");
+        User? user = LoadUserFromJson(userPath);
+        if (user == null)
+        {
+            DrawText($"Error al cargar el archivo {userPath}");
+            return;
+        }
+
+        if (isRaw)
+        {
+            DrawText(File.ReadAllText(userPath));
+            return;
+        }
+
+        DrawText($"Nombre: {user.name}");
+        DrawText($"Roles adicionales: {string.Join(", ", user.additionalRoles)}");
+        DrawText($"Fandom: {user.fandom}");
+        DrawText($"Roles buscados: {string.Join(", ", user.lookedCharacters)}");
+        DrawText($"Edad: {user.age}");
+        DrawText($"Pronombres: {string.Join(", ", user.additionalRoles)}");
+        DrawText($"Racha: {user.streak}");
+        DrawText($"ID: {user.userId}");
+        DrawText($"Status: {user.status}");
     }
 }

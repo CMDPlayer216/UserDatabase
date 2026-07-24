@@ -51,6 +51,7 @@ public static class Program
         var pronounsOption = new Option<string>("--pronouns", "-p") { Description = "Pronombres del usuario", Required = true };
         var streakOption = new Option<int>("--streak", "-s") { Description = "Racha del usuario", DefaultValueFactory = _ => 0 };
         var userIdOption = new Option<string>("--user-id", "-u") { Description = "ID del usuario", DefaultValueFactory = _ => Nanoid.Generate(size: 12) };
+        var status = new Option<string>("--status", "-S") { Description = "Estado del usuario", DefaultValueFactory = _ => "Activo" };
 
         addCommand.Add(nameOption);
         addCommand.Add(additionalRolesOption);
@@ -60,6 +61,7 @@ public static class Program
         addCommand.Add(pronounsOption);
         addCommand.Add(streakOption);
         addCommand.Add(userIdOption);
+        addCommand.Add(status);
 
         addCommand.SetAction((ParseResult parseResult) =>
         {
@@ -78,7 +80,8 @@ public static class Program
                 parseResult.GetValue(ageOption),
                 pronouns.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
                 parseResult.GetValue(streakOption),
-                userid
+                userid,
+                parseResult.GetValue(status) ?? "Activo"
                 );
         });
 
@@ -109,6 +112,7 @@ public static class Program
         modifyCommand.Add(streakOptionM);
         modifyCommand.Add(userIdOptionM);
         modifyCommand.Add(sourceUserOption);
+        modifyCommand.Add(status);
 
 
 
@@ -120,6 +124,7 @@ public static class Program
             string additionalRolesToRemove = parseResult.GetValue(removeAdditionalRolesOption) ?? "";
             string lookedCharactersToRemove = parseResult.GetValue(removeLookedCharactersOption) ?? "";
             string pronounsToRemove = parseResult.GetValue(removePronounsOption) ?? "";
+
             Commands.ModifyUser(
                 parseResult.GetValue(sourceUserOption) ?? "",
                 parseResult.GetValue(nameOptionM) ?? "",
@@ -132,13 +137,40 @@ public static class Program
                 parseResult.GetValue(userIdOptionM) ?? "",
                 additionalRolesToRemove.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
                 lookedCharactersToRemove.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
-                pronounsToRemove.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                pronounsToRemove.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
+                parseResult.GetValue(status) ?? "Activo"
+
             );
+        });
+
+        var deleteCommand = new Command("remove", "Permite eliminar un usuario");
+
+        var noConfirm = new Option<bool>("--noconfirm") { Description = "Desactiva la confirmación de borrado (usar con cuidado)", DefaultValueFactory = _ => false };
+        var userIdOptionD = new Option<string>("--user-id", "-u") { Description = "ID del usuario", Required = true };
+
+        deleteCommand.Add(userIdOptionD);
+        deleteCommand.Add(noConfirm);
+
+        deleteCommand.SetAction((ParseResult parseResult) =>
+        {
+            Commands.DeleteUser(parseResult.GetValue(userIdOptionD) ?? "0", parseResult.GetValue(noConfirm));
+        });
+
+        var showCommand = new Command("show", "Muestra los datos de un usuario");
+
+        showCommand.Add(userIdOptionD);
+        showCommand.Add(rawOption);
+
+        showCommand.SetAction((ParseResult parseResult) =>
+        {
+            Commands.Show(parseResult.GetValue(userIdOptionD) ?? "0", parseResult.GetValue(rawOption));
         });
 
         rootCommand.Add(listCommand);
         rootCommand.Add(addCommand);
         rootCommand.Add(modifyCommand);
+        rootCommand.Add(deleteCommand);
+        rootCommand.Add(showCommand);
 
         // 3. Pasar los argumentos de la aplicación al parser
         return await rootCommand.Parse(args).InvokeAsync();
@@ -155,7 +187,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         DrawText("");
-        DrawText("UserDB v3.0-RELEASE-CANDIDATE-1 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v3.0 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {

@@ -17,4 +17,5 @@ public class User
 
     public DateOnly dateRegistered { get; set; }
     public int streak { get; set; }
+    public string status {get; set;} = "";
 }

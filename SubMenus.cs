@@ -127,8 +127,13 @@ public static class Menus
 
         userId = inputId;
 
+        inp = TakeInput("Ingresa el status (Deja vacío para establecer en activo): ", Color.Yellow);
+        inp = string.Concat(inp.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
+        if (string.IsNullOrWhiteSpace(inp))
+            inp = "Activo";
+        string status = inp;
         // Guardar usuario vía Servicio
-        Commands.AddUser(name, additionalRoles, fandom, lookedCharacters, age, pronouns, streak, userId);
+        Commands.AddUser(name, additionalRoles, fandom, lookedCharacters, age, pronouns, streak, userId, status);
     }
 
     /// <summary>
@@ -464,6 +469,14 @@ public static class Menus
         if (int.TryParse(inp, out inpi) && inpi >= 0)
         {
             currentUser.streak = inpi;
+        }
+
+        // --- STATUS ---
+        Console.Clear();
+        inp = TakeInput($"Ingresa el status (Actual: {currentUser.status}, deja vacío para conservar): ", Color.Yellow);
+        if (!string.IsNullOrWhiteSpace(inp))
+        {
+            currentUser.status = inp;
         }
 
         // --- USER ID Y RENOMBRADO DE ARCHIVO .JSON ---

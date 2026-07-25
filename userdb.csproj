@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <Version>v3.1</Version>    
+    <Version>3.1</Version>    
   </PropertyGroup>
 
   <ItemGroup>

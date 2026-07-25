@@ -42,8 +42,11 @@ public static class Program
         var sourceUserOption             = new Option<string>("--source-user",              "-u") {    Description = "Usuario que se va a modificar",                                                                                   Required = true };
         var noConfirm                    = new Option<bool>(  "--noconfirm")                      {    Description = "Desactiva la confirmación de borrado (usar con cuidado)", DefaultValueFactory = _ => false };
         var userIdOptionD                = new Option<string>("--user-id",                  "-u") {    Description = "ID del usuario a eliminar",                                                                                       Required = true }; // Exclusido del comando delete
-
-
+        var destFileOption               = new Option<string>("--destination-file",         "-d") {    Description = "Nombre del archivo de destino",                           DefaultValueFactory = _ => ""};
+        var isAllDatabaseOption          = new Option<bool>(  "--all-database",             "-a") {    Description = "Afecta a toda la base de datos"};
+        var userIdOptionE                = new Option<string>("--user-id",                  "-u") {    Description = "ID del usuario a exportar"};
+        var resFileOption                = new Option<string>("--resource-file",            "-r") {    Description = "Archivo de entrada",                                                                                              Required = true};
+        var modeOption                   = new Option<string>("--mode",                     "-m") {    Description = "Modo de operación",                                       DefaultValueFactory = _ => "keep"};
         
         // Comandos                               | Comando  | Descripcion
         var listCommand              = new Command("list",    "Muestra una lista de usuarios registrados");
@@ -51,6 +54,8 @@ public static class Program
         var modifyCommand            = new Command("modify",  "Permite modificar un usuario");
         var deleteCommand            = new Command("delete",  "Permite eliminar un usuario");
         var showCommand              = new Command("show",    "Muestra los datos de un usuario");
+        var exportCommand            = new Command("export",  "Operaciones de exportación");
+        var importCommand            = new Command("import",  "Permite importar un usuario desde un archivo");
 
         // Añadir opciones a comando list
         listCommand.Add(tableOption);
@@ -89,6 +94,16 @@ public static class Program
         // Añadir opciones a comando show
         showCommand.Add(userIdOptionD);
         showCommand.Add(rawOption);
+
+        // Añadir opciones a export
+        exportCommand.Add(destFileOption);
+        exportCommand.Add(userIdOptionE);
+        exportCommand.Add(isAllDatabaseOption);
+
+        // Aádir opciones a import
+        importCommand.Add(resFileOption);
+        importCommand.Add(modeOption);
+        importCommand.Add(isAllDatabaseOption);
 
         // Validaciones para List
         listCommand.Validators.Add(commandResult =>
@@ -170,12 +185,44 @@ public static class Program
             Commands.Show(parseResult.GetValue(userIdOptionD) ?? "0", parseResult.GetValue(rawOption)); // Le pasamos el control a Commands.Show() que mostrará la información según se haya especificado
         });
 
+        // Acciones para export
+        exportCommand.SetAction((ParseResult parseResult) =>
+        {
+            if (string.IsNullOrEmpty(parseResult.GetValue(userIdOptionE)) || parseResult.GetValue(isAllDatabaseOption)) Commands.ExportDataBase(parseResult.GetValue(destFileOption));
+            if (!parseResult.GetValue(isAllDatabaseOption) && !string.IsNullOrEmpty(parseResult.GetValue(userIdOptionE))) Commands.ExportUser(parseResult.GetValue(userIdOptionE), parseResult.GetValue(destFileOption));
+        });
+
+        importCommand.SetAction((ParseResult parseResult) =>
+        {
+            string? source = parseResult.GetValue(resFileOption);
+            string? mode = parseResult.GetValue(modeOption);
+
+            string[] validModes = ["keep", "overwrite", "combine-keepeng-original", "combine-keeping-new"];
+
+            if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(mode))
+            {
+                DrawText($"Error parseando argumentos: source = {source}, mode = {mode}");
+                return;
+            }
+
+            if (!validModes.Contains(mode))
+            {
+                DrawText("Modo no soportado", Color.Red);
+                return;
+            }
+
+            if (parseResult.GetValue(isAllDatabaseOption)) Commands.ImportDataBase(source, mode);
+            else Commands.ImportSingleUser(source, mode);
+        });
+
         // Añadirmos los subcomandos al comando principal
         rootCommand.Add(listCommand);
         rootCommand.Add(addCommand);
         rootCommand.Add(modifyCommand);
         rootCommand.Add(deleteCommand);
         rootCommand.Add(showCommand);
+        rootCommand.Add(exportCommand);
+        rootCommand.Add(importCommand);
 
         // Pasar los argumentos de la aplicación al parser
         return await rootCommand.Parse(args).InvokeAsync();
@@ -192,7 +239,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         DrawText("");
-        DrawText("UserDB v3.0 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v3.1 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {
@@ -202,7 +249,9 @@ public static class Program
             DrawText("3. Verificar un usuario");
             DrawText("4. Modificar un usuario");
             DrawText("5. Eliminar usuario");
-            DrawText("6. Salir");
+            DrawText("6. Importar/Exportar usuario");
+            DrawText("7. Importar/Exportar base de datos");
+            DrawText("8. Salir");
             DrawText("");
 
             string input = TakeInput();
@@ -228,6 +277,12 @@ public static class Program
                         RemoveUser();
                         break;
                     case 6:
+                        UserImportOrExport();
+                        break;
+                    case 7:
+                        DataBaseImportOrExport();
+                        break;
+                    case 8:
                         return;
                     default:
                         DrawText("Esa opcion no existe!", Color.Red);

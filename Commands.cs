@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 using NanoidDotNet;
 using static userdb.ConsoleHelper;
@@ -304,5 +305,174 @@ static class Commands
         DrawText($"Racha: {user.streak}");
         DrawText($"ID: {user.userId}");
         DrawText($"Status: {user.status}");
+    }
+    public static void ExportDataBase(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            string fecha = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            path = $"User-Data-Base-Exported-{fecha}.userdb";
+        }
+        else if (!path.EndsWith(".userdb", StringComparison.OrdinalIgnoreCase))
+        {
+            path += ".userdb";
+        }
+        string[] dataBase = Directory.GetFiles(UserService.GPath);
+        using (ZipArchive zip = ZipFile.Open(path, ZipArchiveMode.Create))
+        {
+            foreach (string filePath in dataBase)
+            {
+                string fileName = Path.GetFileName(filePath);
+                zip.CreateEntryFromFile(filePath, fileName, CompressionLevel.Optimal);
+            }
+        }
+
+        DrawText($"Base de datos exportada con éxito a: {path}", Color.Green);
+    }
+    public static void ExportUser(string? userId, string? path)
+    {
+        string userPath = Path.Combine(UserService.GPath, $"{userId}.json");
+        if (string.IsNullOrEmpty(path))
+        {
+            User? user = LoadUserFromJson(userPath);
+            if (user == null)
+            {
+                DrawText("Error al crear el archivo: Archivo corrupto", Color.Red);
+                return;
+            }
+            path = user.name + ".json";
+        }
+        if (path == null) path = $"User-Exported-{DateTime.Now.ToString()}.json";
+        if (!path.EndsWith(".json")) path += ".json";
+        string content = File.ReadAllText(userPath);
+        File.WriteAllText(path, content);
+        DrawText($"Usuario exportado con éxito a: {path}", Color.Green);
+    }
+    public static void ImportSingleUser(string source, string mode)
+    {
+        User? user = LoadUserFromJson(source);
+
+        if (user == null)
+        {
+            DrawText($"Omite importación: El archivo {Path.GetFileName(source)} no tiene formato válido.", Color.Red);
+            return;
+        }
+
+        string userPath = Path.Combine(GPath, $"{user.userId}.json");
+        string datPath = Path.Combine(GPath, "users.dat");
+
+        switch (mode)
+        {
+            case "keep":
+                if (File.Exists(Path.Combine(GPath, userPath)))
+                {
+                    DrawText($"El usuario {user.userId} ya existe, omitiendo...", Color.Yellow);
+                    return;
+                }
+                SaveUser(user);
+                break;
+
+            case "overwrite":
+                if (File.Exists(userPath))
+                {
+                    File.Delete(userPath);
+
+                    if (File.Exists(datPath))
+                    {
+                        List<string> userIndex = File.ReadAllLines(datPath).ToList();
+                        userIndex.Remove($"{user.name},{userPath}");
+
+                        if (userIndex.Count == 0) File.Delete(datPath);
+                        else File.WriteAllLines(datPath, userIndex);
+                    }
+                }
+
+                SaveUser(user);
+                break;
+
+            case "combine-keeping-original":
+                if (File.Exists(userPath))
+                {
+                    ModifyUser(user.userId, "", user.additionalRoles, "", user.lookedCharacters, 0, user.pronouns, 0, user.userId, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), "");
+                }
+                else
+                {
+                    SaveUser(user);
+                }
+                break;
+
+            case "combine-keeping-new":
+                if (File.Exists(userPath))
+                {
+                    ModifyUser(user.userId, "", user.additionalRoles, "", user.lookedCharacters, user.age, user.pronouns, user.streak, user.userId, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(), user.status);
+                }
+                else
+                {
+                    SaveUser(user);
+                }
+                break;
+        }
+    }
+    public static void ImportDataBase(string source, string mode)
+    {
+        // Paso 1: Validar que el archivo existe
+        if (!File.Exists(source))
+        {
+            DrawText("El archivo de base de datos especificado no existe!", Color.Red);
+            return;
+        }
+
+        // Paso 2: Validar la extensión del archivo (.userdb)
+        if (!source.EndsWith(".userdb", StringComparison.OrdinalIgnoreCase))
+        {
+            DrawText("Formato de archivo no compatible. Debe tener extensión .userdb", Color.Red);
+            return;
+        }
+
+        // Paso 3: Crear una carpeta temporal única para extraer los datos
+        string tempDirectory = Path.Combine(Path.GetTempPath(), $"userdb_import_{Guid.NewGuid()}");
+
+        try
+        {
+            // Paso 4: Descomprimir el archivo zip (.userdb) en el directorio temporal
+            ZipFile.ExtractToDirectory(source, tempDirectory);
+
+            // Paso 5: Buscar todos los archivos JSON de usuarios dentro del paquete descomprimido
+            string[] userFiles = Directory.GetFiles(tempDirectory, "*.json", SearchOption.AllDirectories);
+
+            if (userFiles.Length == 0)
+            {
+                DrawText("El archivo .userdb no contiene datos de usuarios válidos.", Color.Yellow);
+                return;
+            }
+
+            // Paso 6: Procesar cada usuario utilizando la lógica de importación existente
+            int importedCount = 0;
+
+            foreach (string userFile in userFiles)
+            {
+                // Usamos la rutina de carga e importación para cada archivo individual
+                ImportSingleUser(userFile, mode);
+                importedCount++;
+            }
+
+            DrawText($"Proceso finalizado. Se procesaron {importedCount} usuarios en modo '{mode}'.", Color.Green);
+        }
+        catch (InvalidDataException)
+        {
+            DrawText("El archivo .userdb está dañado o no es un archivo zip válido.", Color.Red);
+        }
+        catch (Exception ex)
+        {
+            DrawText($"Ocurrió un error al importar la base de datos: {ex.Message}", Color.Red);
+        }
+        finally
+        {
+            // Paso 7: Limpiar la carpeta temporal pase lo que pase
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 }

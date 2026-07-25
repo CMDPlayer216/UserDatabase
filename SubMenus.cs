@@ -558,4 +558,205 @@ public static class Menus
         Commands.DeleteUser(user.userId);
     }
 
+    private static void ImportUser()
+    {
+        Console.Clear();
+        string source = TakeInput("Ruta del archivo JSON: ");
+        DrawText("Seleccione un modo (en caso de duplicados), presione enter para dejar el por defecto: ");
+        DrawText("1. Mantener los datos de cualquier usuario existente (por defecto)");
+        DrawText("2. Sobreescribir TODOS los datos");
+        DrawText("3. Combinar priorizando original");
+        DrawText("4. Combinar priorizando nuevo");
+
+        string input = TakeInput();
+        int.TryParse(input, out int option);
+        string mode = "keep";
+
+        try
+        {
+            switch (option)
+            {
+                case 1:
+                    mode = "keep";
+                    break;
+                case 2:
+                    mode = "overwrite";
+                    break;
+                case 3:
+                    mode = "combine-keeping-original";
+                    break;
+                case 4:
+                    mode = "comine-keepeng-new";
+                    break;
+                default:
+                    mode = "keep";
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            DrawText($"[ERROR - {e.GetType().Name}]: {e.Message}", Color.Red);
+        }
+
+        Commands.ImportSingleUser(source, mode);
+    }
+    private static void ExportUser()
+    {
+        Console.Clear();
+
+        string[] lines = UserService.GetUserIndexLines();
+
+        if (lines.Length == 0)
+        {
+            DrawText("No hay usuarios registrados para modificar.", Color.Red);
+            return;
+        }
+
+        DrawText("Selecciona un usuario: ", Color.White);
+        DrawText("");
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string[] userData = lines[i].Split(',');
+            DrawText($"{i + 1}. {userData[0]}", Color.Yellow);
+        }
+        DrawText("");
+        string inputSelection = TakeInput("Ingresa el numero del usuario: ");
+
+        if (!int.TryParse(inputSelection, out int selectedIndex) || selectedIndex < 1 || selectedIndex > lines.Length)
+        {
+            DrawText("Seleccion invalida.", Color.Red);
+            return;
+        }
+
+        int realindex = selectedIndex - 1;
+        string[] user = lines[realindex].Split(',');
+        string dest = TakeInput("Ruta para exportar: ");
+
+        User? userObj = UserService.LoadUserFromJson(user[1]);
+
+        if (userObj == null)
+        {
+            DrawText("No se pudo cargar el usuario.", Color.Red);
+            return;
+        }
+
+        Commands.ExportUser(userObj.userId, dest);
+    }
+    public static void UserImportOrExport()
+    {
+        Console.Clear();
+        DrawText("Qué quieres hacer?");
+        DrawText("1. Importar usuario");
+        DrawText("2. Exportar usuario");
+        DrawText("3. Volver");
+
+        string input = TakeInput();
+        int.TryParse(input, out int option);
+
+        try
+        {
+            switch (option)
+            {
+                case 1:
+                    ImportUser();
+                    break;
+                case 2:
+                    ExportUser();
+                    break;
+                case 3:
+                    return;
+                default:
+                    DrawText("Esa opcion no existe!", Color.Red);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            DrawText($"[ERROR - {e.GetType().Name}]: {e.Message}", Color.Red);
+        }
+    }
+    private static void ImportDataBase()
+    {
+        Console.Clear();
+        string source = TakeInput("Ruta del archivo JSON: ");
+        DrawText("Seleccione un modo (en caso de duplicados), presione enter para dejar el por defecto: ");
+        DrawText("1. Mantener los datos de cualquier usuario existente (por defecto)");
+        DrawText("2. Sobreescribir TODOS los datos");
+        DrawText("3. Combinar priorizando original");
+        DrawText("4. Combinar priorizando nuevo");
+
+        string input = TakeInput();
+        int.TryParse(input, out int option);
+        string mode = "keep";
+
+        try
+        {
+            switch (option)
+            {
+                case 1:
+                    mode = "keep";
+                    break;
+                case 2:
+                    mode = "overwrite";
+                    break;
+                case 3:
+                    mode = "combine-keeping-original";
+                    break;
+                case 4:
+                    mode = "comine-keepeng-new";
+                    break;
+                default:
+                    mode = "keep";
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            DrawText($"[ERROR - {e.GetType().Name}]: {e.Message}", Color.Red);
+        }
+
+        if (!source.EndsWith(".userdb")) source += ".userdb";
+
+        Commands.ImportDataBase(source, mode);
+    }
+    private static void ExportDataBase()
+    {
+        Console.Clear();
+        string dest = TakeInput("Archivo de destino: ");
+        Commands.ExportDataBase(dest);
+    }
+    public static void DataBaseImportOrExport()
+    {
+        Console.Clear();
+        DrawText("Qué quieres hacer?");
+        DrawText("1. Importar base de datos");
+        DrawText("2. Exportar base de datos");
+        DrawText("3. Volver");
+
+        string input = TakeInput();
+        int.TryParse(input, out int option);
+
+        try
+        {
+            switch (option)
+            {
+                case 1:
+                    ImportDataBase();
+                    break;
+                case 2:
+                    ExportDataBase();
+                    break;
+                case 3:
+                    return;
+                default:
+                    DrawText("Esa opcion no existe!", Color.Red);
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            DrawText($"[ERROR - {e.GetType().Name}]: {e.Message}", Color.Red);
+        }
+    }
 }

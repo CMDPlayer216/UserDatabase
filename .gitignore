@@ -7,3 +7,5 @@ publish/
 # Archivos de datos e información sensible
 *.json
 *.dat
+*.zip
+*.userdb

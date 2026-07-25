@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using static userdb.ConsoleHelper;
 
 namespace userdb;
 
@@ -56,6 +57,22 @@ public static class UserService
     {
         if (!File.Exists(jsonPath)) return null;
         string content = File.ReadAllText(jsonPath);
-        return JsonSerializer.Deserialize<User>(content);
+        try
+        {
+            return JsonSerializer.Deserialize<User>(content);
+        }
+        catch (JsonException ex)
+        {
+            // El archivo no es un JSON o tiene mal formato
+            DrawText($"Error de formato JSON: {ex.Message}", Color.Red);
+            DrawText($"Línea: {ex.LineNumber}, Posición: {ex.BytePositionInLine}", Color.Red);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            DrawText($"Ocurrió un error inesperado: {ex.Message}", Color.Red);
+            return null;
+        }
+
     }
 }

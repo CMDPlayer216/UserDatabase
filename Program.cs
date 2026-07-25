@@ -10,6 +10,7 @@ public static class Program
     // METODO PRINCIPAL
     static async Task<int> Main(string[] args)
     {
+        Commands.RegenerateIndex(UserService.GPath);
         // Comando principal
         var rootCommand = new RootCommand("UserDatabase - Sistema de gestión");
 

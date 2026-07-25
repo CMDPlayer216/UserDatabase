@@ -19,6 +19,7 @@ public static class UserService
 
     public static string[] GetUserIndexLines()
     {
+        Commands.RegenerateIndex(UserService.GPath);
         if (!File.Exists(UsersDatPath)) return Array.Empty<string>();
         return File.ReadAllLines(UsersDatPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToArray();
     }
@@ -55,6 +56,7 @@ public static class UserService
 
     public static User? LoadUserFromJson(string jsonPath)
     {
+        Commands.RegenerateIndex(UserService.GPath);
         if (!File.Exists(jsonPath)) return null;
         string content = File.ReadAllText(jsonPath);
         try

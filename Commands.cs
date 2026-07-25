@@ -475,4 +475,84 @@ static class Commands
             }
         }
     }
-}
+
+        public static void RegenerateIndex(string gPath)
+    {
+        string datPath = Path.Combine(gPath, "users.dat");
+        
+        // 1. Si no existe la carpeta contenedora, no hay nada que escanear
+        if (!Directory.Exists(gPath))
+        {
+            Directory.CreateDirectory(gPath);
+            if (File.Exists(datPath)) File.Delete(datPath);
+            return;
+        }
+
+        // 2. Buscamos todos los archivos .json en la carpeta
+        string[] jsonFiles = Directory.GetFiles(gPath, "*.json", SearchOption.TopDirectoryOnly);
+
+        // Si no hay usuarios guardados, aseguramos borrar el .dat viejo si existía
+        if (jsonFiles.Length == 0)
+        {
+            if (File.Exists(datPath)) File.Delete(datPath);
+            return;
+        }
+
+        List<string> indexLines = new List<string>();
+
+        // 3. Inspeccionamos cada JSON para extraer únicamente 'name' y 'userId'
+        foreach (string filePath in jsonFiles)
+        {
+            try
+            {
+                using FileStream stream = File.OpenRead(filePath);
+                using JsonDocument doc = JsonDocument.Parse(stream);
+
+                JsonElement root = doc.RootElement;
+
+                // Intentamos obtener las propiedades 'name' y 'userId' (o Name / UserId)
+                string? name = null;
+                string? userId = null;
+
+                if (root.TryGetProperty("name", out JsonElement nameElement) || 
+                    root.TryGetProperty("Name", out nameElement))
+                {
+                    name = nameElement.GetString();
+                }
+
+                if (root.TryGetProperty("userId", out JsonElement idElement) || 
+                    root.TryGetProperty("UserId", out idElement))
+                {
+                    userId = idElement.GetString();
+                }
+
+                // 4. Si la estructura es válida, construimos la línea con el formato exacto:
+                // {name},{GPath + userId}.json
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(userId))
+                {
+                    string userJsonPath = Path.Combine(gPath, $"{userId}.json");
+                    indexLines.Add($"{name},{userJsonPath}");
+                }
+            }
+            catch (JsonException)
+            {
+                // Si hay algún .json corrupto o mal formado en la carpeta, 
+                // lo ignoramos para que no rompa el índice de los demás.
+            }
+            catch (Exception)
+            {
+                // Ignorar cualquier otro error de lectura puntual de ese archivo
+            }
+        }
+
+        // 5. Reescribimos el archivo users.dat con las entradas reconstruidas
+        if (indexLines.Count > 0)
+        {
+            File.WriteAllLines(datPath, indexLines);
+        }
+        else if (File.Exists(datPath))
+        {
+            File.Delete(datPath);
+        }
+    }
+    }

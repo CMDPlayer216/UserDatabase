@@ -20,7 +20,7 @@ public static class Menus
             DrawText("No hay usuarios registrados.", Color.Red);
             return;
         }
-
+        
         Commands.ListUsers(true, false);
     }
 
@@ -132,6 +132,7 @@ public static class Menus
         if (string.IsNullOrWhiteSpace(inp))
             inp = "Activo";
         string status = inp;
+        
         // Guardar usuario vía Servicio
         Commands.AddUser(name, additionalRoles, fandom, lookedCharacters, age, pronouns, streak, userId, status);
     }
@@ -143,6 +144,7 @@ public static class Menus
     {
         Console.Clear();
 
+        
         string[] lines = UserService.GetUserIndexLines();
 
         if (lines.Length == 0)
@@ -172,6 +174,7 @@ public static class Menus
         string[] selectedUserData = lines[selectedIndex - 1].Split(',');
         string jsonPath = selectedUserData[1];
 
+        
         User? currentUser = UserService.LoadUserFromJson(jsonPath);
 
         if (currentUser == null)
@@ -198,6 +201,7 @@ public static class Menus
             DrawText("Racha reiniciada a 0.", Color.Red);
         }
 
+        
         UserService.UpdateUserJson(jsonPath, currentUser);
     }
 
@@ -205,6 +209,7 @@ public static class Menus
     {
         Console.Clear();
 
+        
         string[] lines = UserService.GetUserIndexLines();
 
         if (lines.Length == 0)

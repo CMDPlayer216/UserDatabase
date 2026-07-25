@@ -56,7 +56,7 @@ public static class Program
         var deleteCommand            = new Command("delete",  "Permite eliminar un usuario");
         var showCommand              = new Command("show",    "Muestra los datos de un usuario");
         var exportCommand            = new Command("export",  "Operaciones de exportación");
-        var importCommand            = new Command("import",  "Permite importar un usuario desde un archivo");
+        var importCommand            = new Command("import",  "Operaciones de importación");
 
         // Añadir opciones a comando list
         listCommand.Add(tableOption);

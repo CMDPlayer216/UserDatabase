@@ -476,10 +476,10 @@ static class Commands
         }
     }
 
-        public static void RegenerateIndex(string gPath)
+    public static void RegenerateIndex(string gPath)
     {
         string datPath = Path.Combine(gPath, "users.dat");
-        
+
         // 1. Si no existe la carpeta contenedora, no hay nada que escanear
         if (!Directory.Exists(gPath))
         {
@@ -514,13 +514,13 @@ static class Commands
                 string? name = null;
                 string? userId = null;
 
-                if (root.TryGetProperty("name", out JsonElement nameElement) || 
+                if (root.TryGetProperty("name", out JsonElement nameElement) ||
                     root.TryGetProperty("Name", out nameElement))
                 {
                     name = nameElement.GetString();
                 }
 
-                if (root.TryGetProperty("userId", out JsonElement idElement) || 
+                if (root.TryGetProperty("userId", out JsonElement idElement) ||
                     root.TryGetProperty("UserId", out idElement))
                 {
                     userId = idElement.GetString();
@@ -538,10 +538,12 @@ static class Commands
             {
                 // Si hay algún .json corrupto o mal formado en la carpeta, 
                 // lo ignoramos para que no rompa el índice de los demás.
+                return;
             }
             catch (Exception)
             {
                 // Ignorar cualquier otro error de lectura puntual de ese archivo
+                return;
             }
         }
 
@@ -555,4 +557,4 @@ static class Commands
             File.Delete(datPath);
         }
     }
-    }
+}

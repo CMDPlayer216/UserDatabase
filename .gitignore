@@ -10,3 +10,4 @@ publish/
 *.zip
 *.userdb
 *.log
+CHANGES.md

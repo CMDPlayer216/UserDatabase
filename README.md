@@ -154,7 +154,28 @@ UserDatabase/
 
 ---
 
-## 🔨 Compilación e Instalación
+## 🚀 Instalación Rápida
+
+Para instalar y usar `userdb` directamente en tu sistema sin compilar manualmente, ejecuta el script correspondiente a tu sistema operativo:
+
+### En Linux
+```bash
+chmod +x install.sh
+./install.sh
+```
+*(Descarga el binario ejecutable en `~/.local/bin/userdb` y lo configura en tu `PATH`)*
+
+### En Windows (PowerShell)
+```powershell
+.\install.ps1
+```
+*(Descarga el ejecutable en `%LOCALAPPDATA%\UserDB` y lo agrega a las variables de entorno `PATH`)*
+
+---
+
+## 🔨 Compilación y Exportación (Desarrollo)
+
+Si deseas compilar el código fuente o generar los binarios distribuidos por tu cuenta:
 
 ### Prerrequisitos
 Tener instalado el SDK de .NET:
@@ -167,11 +188,13 @@ dotnet --version
 dotnet build
 ```
 
-### Exportar Binarios Distribuidos (Linux / Windows)
+### Compilar y Exportar Binarios Autocontenidos (Linux / Windows)
+Para compilar y empaquetar los ejecutables nativos autocontenidos (*single-file* y comprimidos) para ambas plataformas, utiliza el script `export.sh`:
 ```bash
 chmod +x export.sh
 ./export.sh
 ```
+*(Genera los binarios en `./publish/linux-x64/` y `./publish/windows-x64/` y copia copias listas para distribución al escritorio)*
 
 ---
 

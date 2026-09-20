@@ -1,6 +1,7 @@
-using NanoidDotNet;
 using userdb.Commands;
 using userdb.Services;
+using userdb.Validators;
+using static NanoidDotNet.Nanoid;
 using static userdb.ConsoleHelper;
 
 namespace userdb.Menus;
@@ -20,99 +21,209 @@ public static class AddUserMenu
         List<string> pronouns;
         int streak;
         string userId;
+        string status;
 
         string inp = "";
-        List<string> inpa = Array.Empty<string>().ToList();
-        int inpi = 0;
+        List<string> inpa = [];
+        int inpi = -1;
+        bool valid = false;
         bool warning = false;
 
+        bool invalidElement = false;
+
         // --- NOMBRE ---
-        while (string.IsNullOrWhiteSpace(inp))
+        while (!valid)
         {
-            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
+            if (warning) DrawText("El nombre no es válido o está vacío", Color.Red);
             inp = TakeInput("Ingresa el nombre: ", Color.Yellow);
-            inp = string.Concat(inp.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
-            if (string.IsNullOrWhiteSpace(inp)) warning = true;
+            valid = UserValidators.ValidateName(inp);
+            if (!valid) warning = true;
         }
 
         name = inp;
         warning = false;
+        valid = false;
         inp = "";
 
         // --- ROLES ADICIONALES ---
-        inpa = TakeInput("Ingresa roles adicionales (separados por comas, puede estar vacío): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (!valid)
+        {
+            invalidElement = false;
+            inpa = [.. TakeInput("Ingresa roles adicionales (separados por comas, puede estar vacío): ", Color.Yellow)
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
 
-        if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0])))
-            inpa = Array.Empty<string>().ToList();
+            if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0]))) { inpa = []; break; }
+
+            else
+            {
+                foreach (string role in inpa)
+                {
+                    if (!UserValidators.ValidateRole(role))
+                    {
+                        DrawText($"El rol \"{role}\" no es válido", Color.Red);
+                        invalidElement = true;
+                        break;
+                    }
+                }
+                valid = !invalidElement;
+            }
+        }
 
         additionalRoles = inpa;
+        inpa = [];
 
         // --- FANDOM ---
-        while (string.IsNullOrWhiteSpace(inp))
+        while (!valid)
         {
-            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
+            if (warning) DrawText("El fandom no es válido o está vacío", Color.Red);
             inp = TakeInput("Ingresa el fandom: ", Color.Yellow);
-            if (string.IsNullOrWhiteSpace(inp)) warning = true;
+            valid = UserValidators.ValidateFandom(inp);
+            if (!valid) warning = true;
         }
 
         fandom = inp;
         warning = false;
+        valid = false;
         inp = "";
 
         // --- ROLES BUSCADOS ---
-        inpa = TakeInput("Ingresa los roles buscados (separados por comas, puede estar vacío): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (!valid)
+        {
+            invalidElement = false;
+            inpa = [.. TakeInput("Ingresa los roles buscados (separados por comas, puede estar vacío): ", Color.Yellow)
+                .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
 
-        if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0])))
-            inpa = Array.Empty<string>().ToList();
+            if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0]))) { inpa = []; break; }
+            else
+            {
+                foreach (string role in inpa)
+                {
+                    if (!UserValidators.ValidateRole(role))
+                    {
+                        DrawText($"El rol \"{role}\" no es válido", Color.Red);
+                        invalidElement = true;
+                        break;
+                    }
+                }
+                valid = !invalidElement;
+            }
+        }
 
         lookedCharacters = inpa;
+        valid = false;
+        inpa = [];
 
         // --- EDAD ---
-        while (string.IsNullOrWhiteSpace(inp) || inpi == 0)
+        while (!valid)
         {
             if (warning) DrawText("Esa edad no es valida!", Color.Red);
             inp = TakeInput("Ingresa la edad: ", Color.Yellow);
-            if (string.IsNullOrWhiteSpace(inp)) warning = true;
-            if (!string.IsNullOrWhiteSpace(inp)) int.TryParse(inp, out inpi);
+            if (!int.TryParse(inp, out inpi))
+            {
+                warning = true;
+                continue;
+            }
+            if (UserValidators.ValidateAge(inpi) is not true)
+            {
+                warning = true;
+                continue;
+            }
+            valid = true;
         }
 
         age = inpi;
+        inpi = -1;
+        valid = false;
         warning = false;
+        inp = "";
 
         // --- PRONOMBRES ---
-        inpa = Array.Empty<string>().ToList();
-        while (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0])))
+        while (!valid)
         {
-            if (warning) DrawText("No puedes dejar el campo vacío!", Color.Red);
-            inpa = TakeInput("Ingresa los pronombres (separados por comas): ", Color.Yellow).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
-            if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0]))) warning = true;
+            invalidElement = false;
+            inpa = [.. TakeInput("Ingresa los pronombres (separados por comas): ", Color.Yellow)
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+            if (inpa == null || inpa.Count == 0 || (inpa.Count == 1 && string.IsNullOrWhiteSpace(inpa[0])))
+            {
+                DrawText("No puedes dejar este campo vacío!", Color.Red);
+                inpa = [];
+                continue;
+            }
+            foreach (string pronoun in inpa)
+            {
+                if (!UserValidators.ValidatePronoun(pronoun))
+                {
+                    DrawText($"El pronombre \"{pronoun}\" es inválido.", Color.Red);
+                    invalidElement = true;
+                    break;
+                }
+            }
+            valid = !invalidElement;
         }
 
+        valid = false;
         pronouns = inpa;
 
         // --- RACHA ---
-        string inputStreak = TakeInput("Ingresa la racha (de tenerla): ", Color.Yellow) ?? "0";
-        if (!string.IsNullOrWhiteSpace(inputStreak))
-            int.TryParse(inputStreak, out inpi);
-        else
-            inpi = 0;
-
+        while (!valid)
+        {
+            inp = TakeInput("Ingresa la racha (de tenerla): ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp))
+            {
+                inpi = 0;
+                break;
+            }
+            if (!int.TryParse(inp, out inpi) && UserValidators.ValidateStreak(inpi) is not true)
+            {
+                DrawText("Eso no es una racha válida!", Color.Red);
+                continue;
+            }
+            valid = true;
+        }
         streak = inpi;
+        inp = "";
+        valid = false;
 
         // --- USER ID ---
-        string inputId = TakeInput("Ingresa el ID (Deja vacío para autogenerar): ", Color.Yellow);
-        inputId = string.Concat(inputId.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
-        if (string.IsNullOrWhiteSpace(inputId))
-            inputId = Nanoid.Generate(size: 12);
+        while (!valid)
+        {
+            inp = TakeInput("Ingresa el ID (Deja vacío para autogenerar): ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp))
+            {
+                inp = Nanoid.Generate(size: 12);
+                break;
+            }
+            if (!UserValidators.ValidateId(inp)) DrawText("Esa ID no es válida!", Color.Red);
+        }
+        userId = inp;
+        inp = "";
 
-        userId = inputId;
+        while (!valid)
+        {
+            inp = TakeInput("Ingresa el status (Deja vacío para establecer en activo): ", Color.Yellow);
+            if (string.IsNullOrEmpty(inp))
+            {
+                inp = "Activo";
+                break;
+            }
+            if (!UserValidators.ValidateStatus(inp))
+            {
+                DrawText("Ese status no es válido!", Color.Red);
+                DrawText("Status soportados:");
+                string[] validStatus = {"Active"   , "Activo"  , "Inactive",
+                                "Inactivo" , "Unknow"  , "Desconocido",
+                                "Banned"   , "Baneado" , "Kicked",
+                                "Expulsado", "Silenced", "Silenciado"};
+                foreach (string cstatus in validStatus)
+                {
+                    DrawText($"- {cstatus}");
+                }
+            }
 
-        inp = TakeInput("Ingresa el status (Deja vacío para establecer en activo): ", Color.Yellow);
-        inp = string.Concat(inp.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
-        if (string.IsNullOrWhiteSpace(inp))
-            inp = "Activo";
-        string status = inp;
-        
+            else { valid = true; }
+        }
+        status = inp;
+
         // Guardar usuario vía Servicio
         AddUser.Run(name, additionalRoles, fandom, lookedCharacters, age, pronouns, streak, userId, status);
     }

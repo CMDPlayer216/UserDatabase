@@ -27,6 +27,7 @@ public static class Program
         rootCommand.Add(ShowCommandBuilder.Create());
         rootCommand.Add(ExportCommandBuilder.Create());
         rootCommand.Add(ImportCommandBuilder.Create());
+        rootCommand.Add(SearchCommandBuilder.Create());
 
         // Pasar los argumentos de la aplicación al parser
         return await rootCommand.Parse(args).InvokeAsync();
@@ -44,7 +45,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         DrawText("");
-        DrawText("UserDB v3.1.1 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v3.2 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {
@@ -56,7 +57,8 @@ public static class Program
             DrawText("5. Eliminar usuario");
             DrawText("6. Importar/Exportar usuario");
             DrawText("7. Importar/Exportar base de datos");
-            DrawText("8. Salir");
+            DrawText("8. Buscar usuario");
+            DrawText("9. Salir");
             DrawText("");
 
             string input = TakeInput();
@@ -89,6 +91,9 @@ public static class Program
                         DataBaseImportOrExportMenu.Show();
                         break;
                     case 8:
+                        SearchMenu.Show();
+                        break;
+                    case 9:
                         Logs.Log("InteractiveMode", "Saliendo del modo interactivo", Logs.logType.Info, 2);
                         return;
                     default:

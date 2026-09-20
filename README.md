@@ -1,12 +1,8 @@
-# UserDB v3.1.1
+# UserDB v3.2
 
-**UserDB** es una herramienta de línea de comandos (CLI) y terminal interactiva desarrollada en C# / .NET para la gestión ligera, rápida y estructurada de perfiles de usuario, roles, fandoms, pronombres, seguimiento de rachas (*streaks*) diarias y operaciones de importación/exportación de bases de datos completas.
+**UserDB** es una herramienta de gestión de perfiles de usuario ligera, rápida y estructurada para la terminal, desarrollada en C# y .NET. Permite administrar información personal, roles, fandoms, pronombres, seguimiento de rachas (*streaks*) diarias, búsquedas avanzadas y operaciones de importación/exportación de bases de datos completas.
 
-Funciona tanto de forma interactiva mediante menús guiados en consola como a través de comandos CLI directos para automatización y scripts. La información se almacena localmente mediante archivos JSON individuales por usuario y un índice central `.dat`, complementado con un sistema de auditoría y logs diarios.
-
----
-
-## 📸 Screenshots
+Soporta dos modalidades de uso: **modo interactivo** con menús guiados y **modo CLI** con flags para integración y automatización en scripts.
 
 | Menú Principal | Vista de Tabla de Usuarios |
 | :---: | :---: |
@@ -18,297 +14,267 @@ Funciona tanto de forma interactiva mediante menús guiados en consola como a tr
 
 ---
 
-## 🚀 Características Principales
+## 1. Descripción del Proyecto
 
-- **Modo CLI Directo y Modo Interactivo**: Ejecuta el programa sin argumentos para acceder al menú interactivo con navegación guiada o usa subcomandos (`list`, `add`, `modify`, `delete`, `show`, `export`, `import`) con soporte de flags completos.
-- **Visualización en Tabla o Texto**: Renderizado dinámico en consola con colores ANSI y columnas adaptativas que formatean colecciones multilínea (roles buscados, roles adicionales, pronombres, etc.) o volcado en formato crudo/JSON.
-- **Gestión Completa de Perfiles**:
-  - Campos soportados: Nombre, ID (NanoID), Fandom, Edad, Pronombres, Roles Buscados, Roles Adicionales, Status, Fecha de Registro y Racha (*Streak*).
-  - Manejo granular de colecciones (añadir/eliminar elementos individualmente o mediante listas separadas por comas).
-- **Sistema de Rachas (Streaks)**: Módulo interactivo para validar la actividad diaria de un usuario e incrementar o reiniciar su contador.
-- **Importación y Exportación Avanzada**:
-  - **Individual**: Exporta e importa perfiles específicos en formato `.json`.
-  - **Base de Datos Completa**: Empaqueta y extrae la base de datos completa en archivos comprimidos `.userdb` (ZIP).
-  - **Resolución de Conflictos**: 4 modos de importación (`keep`, `overwrite`, `combine-keeping-original`, `combine-keeping-new`).
-- **Sistema de Logs Diario**: Auditoría automática de cada operación registrada en archivos `LOG-dd-MM-yyyy.log` separados por fecha (sin hora en el nombre de archivo) para un control diario ordenado.
-- **Persistencia JSON e Índice Rápido**: Cada usuario se almacena en `~/.userdb/<userId>.json` sincronizado con un archivo de índice `users.dat` con recuperación y regeneración automática en caso de inconsistencias.
-- **Multiplataforma**: Compatible con Linux (`linux-x64`) y Windows (`win-x64`).
+UserDB está diseñado para resolver la administración ágil de perfiles comunitarios o de rol, manteniendo persistencia local y portabilidad total:
+
+- **Almacenamiento Local y Desacoplado**: Cada usuario se almacena en un archivo JSON independiente (`<userId>.json`) dentro de `~/.userdb/` sincronizado con un archivo índice rápido (`users.dat`).
+- **Sistema de Auditoría**: Genera logs diarios automáticos (`LOG-dd-MM-yyyy.log`) en `~/.config/userdb/` para trazabilidad de cada acción.
+- **Rachas (*Streaks*)**: Seguimiento y actualización de actividad periódica por usuario.
+- **Búsqueda Avanzada**: Búsquedas por múltiples criterios (edad, racha, fandom, pronombres, roles, fechas) con soporte para modo rápido (*fast search*).
+- **Importación/Exportación Flexible**: Exporta perfiles individuales a JSON o la base de datos completa a archivos comprimidos `.userdb` (ZIP), con 4 modos de resolución de conflictos.
 
 ---
 
-## 🏗️ Refactorización Arquitectónica
+## 2. Método de Instalación Sencillo
 
-El proyecto fue refactorizado para desacoplar responsabilidades, mejorar la mantenibilidad del código y garantizar la consistencia en el manejo de archivos:
-
-### 1. Desacoplamiento y Estructura Modular
-Se dividieron los antiguos archivos monolíticos en módulos con responsabilidades únicas organizados en sus respectivos namespaces:
-
-```text
-UserDatabase/
-├── Models/                     # [userdb.Models] Modelos de datos y DTOs
-│   ├── User.cs                 # Entidad principal de usuario
-│   └── ModifyingUser.cs        # DTO para transferir y aplicar modificaciones
-│
-├── Services/                   # [userdb.Services] Lógica de negocio y persistencia
-│   ├── UserService.cs          # Operaciones I/O de usuarios y resolución de rutas
-│   ├── RegenerateIndex.cs      # Escaneo de directorio y sincronización de users.dat
-│   └── Logs.cs                 # Servicio de logging estructurado diario
-│
-├── InterfaceServices/          # [userdb.InterfaceServices] Renderizado visual
-│   └── ListUsers.cs            # Formateo y renderizado de tablas en consola
-│
-├── Commands/                   # [userdb.Commands] Lógica pura de comandos
-│   ├── AddUser.cs              # Alta de usuarios
-│   ├── ModifyUser.cs           # Modificación y renombramiento de archivos
-│   ├── DeleteUser.cs           # Eliminación de perfiles
-│   ├── Show.cs                 # Consulta individual
-│   ├── ListUsers.cs            # Listado (tabla / lista / raw)
-│   ├── ExportUser.cs           # Exportación individual a JSON
-│   ├── ImportUser.cs           # Importación individual con resolución de conflictos
-│   ├── ExportDataBase.cs       # Empaquetado a archivo .userdb
-│   └── ImportDataBase.cs       # Descompresión e importación masiva
-│
-├── Commands/Builders/          # [userdb.Commands.Builders] Configuración CLI (System.CommandLine)
-│   ├── AddCommandBuilder.cs
-│   ├── ModifyCommandBuilder.cs
-│   ├── DeleteCommandBuilder.cs
-│   ├── ShowCommandBuilder.cs
-│   ├── ListCommandBuilder.cs
-│   ├── ExportCommandBuilder.cs
-│   └── ImportCommandBuilder.cs
-│
-├── Menus/                      # [userdb.Menus] Pantallas del modo interactivo
-│   ├── AddUser.cs              # AddUserMenu
-│   ├── ModifyUser.cs           # ModifyUserMenu
-│   ├── ShowUsers.cs            # ShowUsers
-│   ├── VerifyUserStreak.cs     # VerifyUserStreak
-│   ├── RemoveUser.cs           # RemoveUserMenu
-│   ├── UserImportOrExport.cs   # UserImportOrExportMenu
-│   └── DataBaseImportOrExport.cs # DataBaseImportOrExportMenu
-│
-├── ConsoleHelper.cs            # [userdb] Utilidades de consola y colores
-└── Program.cs                  # [userdb] Punto de entrada y orquestador principal
-```
-
-### 2. Correcciones Clave del Refactor
-- **Corrección del Bug al Modificar Usuarios**: Se corrigió el error donde modificar usuarios sin cambiar el ID guardaba el archivo como literal `.json` en lugar de `<userId>.json`.
-- **Integridad de Rachas**: Se corrigió la condición de validación de racha en `ModifyUser` y se fijó el valor neutro en `-1` para evitar sobreescribir la racha existente con `0` al omitir el campo.
-- **Trazabilidad Total**: Se implementó `Logs.Log` en todas las clases y métodos de la aplicación.
-
----
-
-## 🛠️ Tecnologías Utilizadas
-
-- **Lenguaje**: C# (.NET 10.0 / 8.0+)
-- **Librerías**:
-  - `System.CommandLine`: Definición y análisis de comandos CLI.
-  - `NanoidDotNet`: Generación de identificadores únicos (NanoID).
-  - `System.Text.Json`: Serialización y deserialización estructurada.
-  - `System.IO.Compression`: Empaquetado y descompresión de archivos `.userdb`.
-- **Compilación**: Ejecutables autocontenidos (*self-contained*) para `linux-x64` y `win-x64`.
-
----
-
-## 📂 Estructura de Datos y Almacenamiento
-
-### Directorio de Usuarios (`~/.userdb/` en Linux / `%USERPROFILE%\.userdb\` en Windows):
-```text
-~/.userdb/
-├── users.dat              # Índice central (formato: Nombre,RutaArchivoJSON)
-├── mob100.json            # Perfil de usuario individual
-└── ...
-```
-
-### Directorio de Logs (`~/.config/userdb/` en Linux / `%APPDATA%\userdb\` en Windows):
-```text
-~/.config/userdb/
-├── LOG-22-08-2026.log     # Registro diario de actividades
-├── LOG-23-08-2026.log
-└── ...
-```
-
-### Esquema JSON de Usuario (`<userId>.json`)
-```json
-{
-  "name": "Shigeo Kageyama",
-  "userId": "mob100",
-  "additionalRoles": [
-    "Geto"
-  ],
-  "age": 18,
-  "fandom": "Mob Psycho 100",
-  "wantedRoles": [
-    "Ritsu",
-    "Geto"
-  ],
-  "pronouns": [
-    "Él",
-    "Him",
-    "He"
-  ],
-  "dateRegistered": "2026-08-17",
-  "streak": 0,
-  "status": "Activo"
-}
-```
-
----
-
-## 🚀 Instalación Rápida
-
-Para instalar y usar `userdb` directamente en tu sistema sin compilar manualmente, ejecuta el script correspondiente a tu sistema operativo:
+No requiere compilar manualmente. Puedes instalar UserDB directamente usando los scripts incluidos en el repositorio:
 
 ### En Linux
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
-*(Descarga el binario ejecutable en `~/.local/bin/userdb` y lo configura en tu `PATH`)*
+*Descarga la última versión de GitHub Release en `~/.local/bin/userdb` y lo añade automáticamente a tu `PATH` en `.bashrc` o `.zshrc`.*
 
 ### En Windows (PowerShell)
 ```powershell
 .\install.ps1
 ```
-*(Descarga el ejecutable en `%LOCALAPPDATA%\UserDB` y lo agrega a las variables de entorno `PATH`)*
+*Descarga el ejecutable en `%LOCALAPPDATA%\UserDB\userdb.exe` y lo añade al `PATH` del usuario.*
+
+Una vez instalado, abre una nueva terminal y ejecuta:
+```bash
+userdb
+```
 
 ---
 
-## 🔨 Compilación y Exportación (Desarrollo)
+## 3. Método de Uso (Interactivo)
 
-Si deseas compilar el código fuente o generar los binarios distribuidos por tu cuenta:
+Para iniciar la interfaz interactiva con menús guiados por consola, ejecuta el comando sin argumentos:
+
+```bash
+userdb
+```
+
+### Opciones del Menú:
+1. **Mostrar usuarios**: Imprime la tabla con todos los perfiles registrados y sus atributos.
+2. **Agregar un usuario**: Asistente guiado paso a paso para dar de alta a un usuario con validaciones de datos.
+3. **Verificar un usuario**: Módulo para registrar actividad y sumar o reiniciar la racha (*streak*) diaria.
+4. **Modificar un usuario**: Submenús específicos para actualizar cualquier campo (nombre, edad, roles, pronombres, etc.).
+5. **Eliminar usuario**: Selección y baja de un perfil previa confirmación.
+6. **Importar/Exportar usuario**: Exporta un perfil específico a `.json` o importa uno resolviendo conflictos.
+7. **Importar/Exportar base de datos**: Genera un archivo `.userdb` comprimido con toda la base de datos o restaura uno existente.
+8. **Buscar usuario**: Menú interactivo con filtros combinables (por nombre, fandom, rangos de edad/racha, etc.).
+9. **Salir**: Cierra la aplicación.
+
+---
+
+## 4. Método de Uso (CLI) y Conexión con Otros Programas
+
+UserDB incluye una interfaz CLI completa (`System.CommandLine`) ideal para automatizaciones, pipelines y scripts.
+
+### Comandos Principales
+
+| Comando | Descripción | Ejemplo |
+| :--- | :--- | :--- |
+| `list` | Lista usuarios (formato normal, `--table` o `--raw`) | `userdb list --table` |
+| `show` | Muestra los detalles de un usuario (`--raw` para JSON puro) | `userdb show -u "mob100"` |
+| `add` | Registra un nuevo usuario | `userdb add -n "Reigen" -f "Mob Psycho" -A 28 -p "Él,He"` |
+| `modify` | Modifica atributos de un usuario existente | `userdb modify -u "reigen" -A 29 -S "Ocupado"` |
+| `delete` | Elimina un usuario (`--no-confirm` para scripts) | `userdb delete -u "reigen" --no-confirm` |
+| `search` | Filtra usuarios por criterios (`--fast`, `--raw`) | `userdb search -f "Mob Psycho" --min-age 18` |
+| `export` | Exporta individual (`-u`) o todo (`-a`) | `userdb export -a -t "copia.userdb"` |
+| `import` | Importa usuarios con resolución de conflictos (`-m`) | `userdb import -a -t "copia.userdb" -m keep` |
+
+> Modos de resolución de conflictos en `import` (`-m`): `keep`, `overwrite`, `combine-keeping-original`, `combine-keeping-new`.
+
+---
+
+### Conexión e Integración con Otros Programas
+
+Gracias al modificador `--raw` presente en `show`, `list` y `search`, UserDB emite datos limpios (JSON estructurado o texto separado por comas) para encadenarse mediante tuberías (*pipes*):
+
+#### 1. Procesar datos con `jq`
+Consultar un perfil en formato JSON crudo y extraer o transformar propiedades con `jq`:
+
+```bash
+# Obtener solo el estado y la racha de un usuario
+userdb show -u "mob100" --raw | jq '{nombre: .name, racha: .streak, estado: .status}'
+
+# Validar en un script de bash si un usuario está activo
+ESTADO=$(userdb show -u "mob100" --raw | jq -r '.status')
+if [ "$ESTADO" = "Activo" ]; then
+    echo "El usuario está habilitado."
+fi
+```
+
+#### 2. Procesar listas con `cut`, `awk` y bucles `while read`
+Iterar sobre los usuarios registrados utilizando la salida cruda de `list`:
+
+```bash
+# Extraer únicamente los nombres de usuario del índice
+userdb list --raw | cut -d',' -f1
+
+# Iterar sobre todos los usuarios para ejecutar acciones externas
+userdb list --raw | while IFS=',' read -r nombre ruta; do
+    id=$(basename "$ruta" .json)
+    echo "Sincronizando: $nombre (ID: $id)"
+done
+```
+
+#### 3. Búsqueda y filtrado en tuberías (*pipes*)
+Filtrar usuarios por criterios específicos y canalizar los resultados:
+
+```bash
+# Contar cuántos usuarios pertenecen a un fandom
+userdb search -f "Mob Psycho 100" --raw | wc -l
+
+# Obtener los IDs de usuarios mayores de 18 años
+userdb search --min-age 18 --raw | cut -d',' -f2 | xargs -n 1 basename -s .json
+```
+
+#### 4. Automatización de respaldos diarios con `cron`
+Programar una exportación automática empaquetada:
+
+```bash
+# Script o tarea en crontab
+userdb export -a -t "$HOME/backups/userdb_$(date +%Y%m%d).userdb"
+```
+
+#### 5. Integración con Python
+Consumir UserDB directamente desde un script en Python:
+
+```python
+import subprocess
+import json
+
+# Ejecutar UserDB y parsear su salida JSON
+salida = subprocess.check_output(["userdb", "show", "-u", "mob100", "--raw"])
+usuario = json.loads(salida)
+
+print(f"Usuario: {usuario['name']} | Racha: {usuario['streak']} días")
+```
+
+---
+
+## 5. Método de Compilación
+
+Si deseas compilar el código fuente por tu cuenta o generar binarios distribuidos:
 
 ### Prerrequisitos
-Tener instalado el SDK de .NET:
-```bash
-dotnet --version
-```
+- [.NET SDK](https://dotnet.microsoft.com/download) (versión 10.0 o 8.0+)
 
 ### Compilar Proyecto
 ```bash
 dotnet build
 ```
 
-### Compilar y Exportar Binarios Autocontenidos (Linux / Windows)
-Para compilar y empaquetar los ejecutables nativos autocontenidos (*single-file* y comprimidos) para ambas plataformas, utiliza el script `export.sh`:
+### Ejecutar en Desarrollo
+```bash
+dotnet run -- list --table
+```
+
+### Compilar y Empaquetar Binarios Autocontenidos (Linux / Windows)
+Puedes utilizar el script `export.sh` para compilar binarios autocontenidos (*single-file* comprimidos) listos para distribución:
+
 ```bash
 chmod +x export.sh
 ./export.sh
 ```
-*(Genera los binarios en `./publish/linux-x64/` y `./publish/windows-x64/` y copia copias listas para distribución al escritorio)*
+
+O compilar manualmente para cada plataforma:
+
+```bash
+# Para Linux (binario único comprimido)
+dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o ./publish/linux-x64
+
+# Para Windows
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish/windows-x64
+```
 
 ---
 
-## 📖 Modo de Uso
+## 6. Tecnologías Usadas
 
-### 1. Modo Interactivo
-Ejecuta la herramienta sin parámetros para abrir el menú interactivo:
-
-```bash
-userdb
-```
-
-**Opciones del Menú:**
-1. **Mostrar usuarios**: Despliega la tabla formateada con todos los usuarios registrados.
-2. **Agregar un usuario**: Asistente interactivo paso a paso con validaciones.
-3. **Verificar un usuario**: Revisa y suma/reinicia la racha diaria de un perfil.
-4. **Modificar un usuario**: Edita datos personales, añade/elimina roles o pronombres de forma interactiva.
-5. **Eliminar usuario**: Selección y eliminación de usuario con confirmación.
-6. **Importar/Exportar usuario**: Exporta un perfil a JSON o importa uno con resolución de conflictos.
-7. **Importar/Exportar base de datos**: Empaqueta toda la base de datos a `.userdb` o importa una existente.
-8. **Salir**: Finaliza el programa.
-
-### 2. Modo de Línea de Comandos (CLI)
-
-#### 🔹 Listar Usuarios (`list`)
-```bash
-# Mostrar usuarios en formato tabla completa
-userdb list --table
-
-# Mostrar contenido en texto plano del índice
-userdb list --raw
-
-# Mostrar lista simple de nombres
-userdb list
-```
-
-#### 🔹 Agregar Usuario (`add`)
-```bash
-userdb add -n "Reigen Arataka" -f "Mob Psycho 100" -A 28 -p "Él,He" -a "Director,Exorcista" -l "Mob" -s 0 -u "reigen" -S "Activo"
-```
-*Parámetros:*
-- `-n, --name` (Requerido): Nombre del usuario.
-- `-f, --fandom` (Requerido): Fandom al que pertenece.
-- `-A, --age` (Requerido): Edad del usuario.
-- `-p, --pronouns` (Requerido): Pronombres (separados por comas).
-- `-a, --additional-roles`: Roles adicionales (separados por comas).
-- `-l, --looked-characters`: Personajes/roles buscados (separados por comas).
-- `-s, --streak`: Racha inicial (por defecto `0`).
-- `-u, --user-id`: ID personalizado (si se omite, se genera un NanoID automático).
-- `-S, --status`: Estado del usuario (por defecto `"Activo"`).
-
-#### 🔹 Modificar Usuario (`modify`)
-```bash
-# Modificar el nombre y agregar roles buscados
-userdb modify -u "reigen" -n "Arataka Reigen" -w "Dimple"
-
-# Modificar edad, estado y cambiar el ID del usuario (renombra el archivo automáticamente)
-userdb modify -u "reigen" -A 29 -S "Ocupado" -U "reigen-master"
-```
-*Parámetros:*
-- `-u, --source-user` (Requerido): ID del usuario a modificar.
-- `-n, --name`: Nuevo nombre.
-- `-f, --fandom`: Nuevo fandom.
-- `-A, --age`: Nueva edad.
-- `-s, --streak`: Nueva racha (`-1` conserva la actual).
-- `-U, --user-id`: Nuevo ID (mueve y renombra el archivo `.json`).
-- `-S, --status`: Nuevo estado.
-- `-a, --add-additional-roles` / `-r, --remove-additional-roles`: Añadir / eliminar roles adicionales.
-- `-w, --add-wanted-roles` / `-W, --remove-wanted-roles`: Añadir / eliminar roles buscados.
-- `-p, --add-pronouns` / `-P, --remove-pronouns`: Añadir / eliminar pronombres.
-
-#### 🔹 Ver Usuario (`show`)
-```bash
-# Mostrar datos formateados
-userdb show -u "mob100"
-
-# Mostrar JSON en crudo
-userdb show -u "mob100" --raw
-```
-
-#### 🔹 Eliminar Usuario (`delete`)
-```bash
-# Eliminar solicitando confirmación
-userdb delete -u "reigen"
-
-# Eliminar omitiendo confirmación
-userdb delete -u "reigen" --no-confirm
-```
-
-#### 🔹 Exportar (`export`)
-```bash
-# Exportar toda la base de datos a un archivo .userdb
-userdb export -a -t "copia_seguridad.userdb"
-
-# Exportar un usuario específico a un archivo .json
-userdb export -u "mob100" -t "mob_backup.json"
-```
-
-#### 🔹 Importar (`import`)
-```bash
-# Importar una base de datos completa conservando usuarios existentes si hay duplicados
-userdb import -a -t "copia_seguridad.userdb" -m "keep"
-
-# Importar un usuario sobrescribiendo datos existentes
-userdb import -t "nuevo_usuario.json" -m "overwrite"
-```
-*Modos soportados (`-m, --mode`):*
-- `keep`: Conserva el usuario local existente si hay coincidencia de ID.
-- `overwrite`: Sobrescribe completamente el usuario local.
-- `combine-keeping-original`: Combina listas agregando elementos nuevos, conservando valores originales en campos individuales.
-- `combine-keeping-new`: Combina listas y actualiza los campos individuales con los valores nuevos.
+- **C# / .NET 10.0**: Lenguaje y runtime principal de la aplicación.
+- **System.CommandLine (2.0.10)**: Manejo, parsing y validación de argumentos y subcomandos CLI.
+- **Nanoid (3.1.0)**: Generación de identificadores únicos seguros y compactos.
+- **System.Text.Json**: Serialización y deserialización de perfiles de usuario.
+- **System.IO.Compression**: Empaquetado y descompresión ZIP para archivos de base de datos `.userdb`.
+- **Bash & PowerShell**: Scripts de instalación rápida (`install.sh`, `install.ps1`) y empaquetado (`export.sh`).
 
 ---
 
-## 📜 Licencia y Créditos
+## 7. Estructura de Archivos y Carpetas
 
-Desarrollado por **CMDPlayer216** (2026).
+### Estructura del Código Fuente
+```text
+UserDatabase/
+├── Commands/                     # Lógica de comandos CLI
+│   ├── Builders/                 # Configuración de subcomandos y opciones (System.CommandLine)
+│   │   ├── AddCommandBuilder.cs
+│   │   ├── DeleteCommandBuilder.cs
+│   │   ├── ExportCommandBuilder.cs
+│   │   ├── ImportCommandBuilder.cs
+│   │   ├── ListCommandBuilder.cs
+│   │   ├── ModifyCommandBuilder.cs
+│   │   ├── SearchCommandBuilder.cs
+│   │   └── ShowCommandBuilder.cs
+│   ├── AddUser.cs
+│   ├── DeleteUser.cs
+│   ├── ExportDataBase.cs
+│   ├── ExportUser.cs
+│   ├── ImportDataBase.cs
+│   ├── ImportUser.cs
+│   ├── ListUsers.cs
+│   ├── ModifyUser.cs
+│   ├── SearchUser.cs
+│   └── Show.cs
+├── InterfaceServices/            # Renderizado visual de tablas y formateo
+│   └── ListUsers.cs
+├── Menus/                        # Flujos y pantallas del modo interactivo
+│   ├── ModifyMenus/              # Submenús interactivos para modificación de campos
+│   ├── AddUser.cs
+│   ├── DataBaseImportOrExport.cs
+│   ├── ModifyUser.cs
+│   ├── RemoveUser.cs
+│   ├── SearchMenu.cs
+│   ├── ShowUsers.cs
+│   ├── UserImportOrExport.cs
+│   └── VerifyUserStreak.cs
+├── Models/                       # Modelos de datos y DTOs
+│   ├── ModifyingUser.cs
+│   ├── SearchParameters.cs
+│   └── User.cs
+├── Services/                     # Servicios centrales y persistencia
+│   ├── Logs.cs                   # Auditoría y logging diario
+│   ├── RegenerateIndex.cs        # Reconstrucción del índice users.dat
+│   └── UserService.cs            # I/O de perfiles y resolución de rutas
+├── Validators/                   # Validadores de entrada de datos
+│   └── UserValidators.cs
+├── screenshots/                  # Capturas de pantalla
+├── ConsoleHelper.cs              # Manejo de colores y utilidades de consola
+├── GlobalUsings.cs               # Usings globales del proyecto
+├── Program.cs                    # Punto de entrada de la aplicación
+├── userdb.csproj                 # Configuración del proyecto .NET
+├── install.sh                    # Script de instalación para Linux
+├── install.ps1                   # Script de instalación para Windows
+├── export.sh                     # Script de compilación y empaquetado
+└── LICENSE                       # Licencia MIT
+```
+
+### Rutas de Almacenamiento en el Sistema
+- **Directorio de Usuarios**: `~/.userdb/` en Linux / `%USERPROFILE%\.userdb\` en Windows
+  - `users.dat`: Índice central de usuarios (`Nombre,RutaJSON`).
+  - `<userId>.json`: Archivo individual de datos de cada perfil.
+- **Directorio de Logs**: `~/.config/userdb/` en Linux / `%APPDATA%\userdb\` en Windows
+  - `LOG-dd-MM-yyyy.log`: Registro diario de operaciones y auditoría.
+
+---
+
+## 8. Créditos y Licencia
+
+- **Autor**: CMDPlayer216 (2026)
+- **Licencia**: Distribuido bajo la Licencia MIT. Para más detalles, consulta el archivo [LICENSE](LICENSE).

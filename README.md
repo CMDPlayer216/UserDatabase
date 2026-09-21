@@ -1,6 +1,6 @@
-# UserDB v3.2
+# UserDB v3.3
 
-**UserDB** es una herramienta de gestión de perfiles de usuario ligera, rápida y estructurada para la terminal, desarrollada en C# y .NET. Permite administrar información personal, roles, fandoms, pronombres, seguimiento de rachas (*streaks*) diarias, búsquedas avanzadas y operaciones de importación/exportación de bases de datos completas.
+**UserDB** es una herramienta de gestión de perfiles de usuario ligera, rápida y estructurada para la terminal, desarrollada en C# y .NET. Permite administrar información personal, roles, fandoms, pronombres, seguimiento de rachas (*streaks*) diarias, búsquedas avanzadas, auditoría continua y operaciones de importación/exportación de bases de datos completas.
 
 Soporta dos modalidades de uso: **modo interactivo** con menús guiados y **modo CLI** con flags para integración y automatización en scripts.
 
@@ -16,10 +16,11 @@ Soporta dos modalidades de uso: **modo interactivo** con menús guiados y **modo
 
 ## 1. Descripción del Proyecto
 
-UserDB está diseñado para resolver la administración ágil de perfiles comunitarios o de rol, manteniendo persistencia local y portabilidad total:
+UserDB está diseñado para resolver la administración ágil de perfiles comunitarios o de rol, manteniendo persistencia local, seguridad de concurrencia y portabilidad total:
 
 - **Almacenamiento Local y Desacoplado**: Cada usuario se almacena en un archivo JSON independiente (`<userId>.json`) dentro de `~/.userdb/` sincronizado con un archivo índice rápido (`users.dat`).
-- **Sistema de Auditoría**: Genera logs diarios automáticos (`LOG-dd-MM-yyyy.log`) en `~/.config/userdb/` para trazabilidad de cada acción.
+- **Control de Concurrencia**: Sistema de bloqueo de base de datos (`userdb.lock`) que previene inconsistencias y condiciones de carrera cuando múltiples instancias o comandos intentan acceder simultáneamente.
+- **Sistema de Auditoría y Logs**: Genera registros diarios automáticos (`LOG-dd-MM-yyyy.log`) en `~/.config/userdb/`, con capacidad de consulta histórica e inspección reactiva en tiempo real (*live streaming*).
 - **Rachas (*Streaks*)**: Seguimiento y actualización de actividad periódica por usuario.
 - **Búsqueda Avanzada**: Búsquedas por múltiples criterios (edad, racha, fandom, pronombres, roles, fechas) con soporte para modo rápido (*fast search*).
 - **Importación/Exportación Flexible**: Exporta perfiles individuales a JSON o la base de datos completa a archivos comprimidos `.userdb` (ZIP), con 4 modos de resolución de conflictos.
@@ -62,12 +63,12 @@ userdb
 1. **Mostrar usuarios**: Imprime la tabla con todos los perfiles registrados y sus atributos.
 2. **Agregar un usuario**: Asistente guiado paso a paso para dar de alta a un usuario con validaciones de datos.
 3. **Verificar un usuario**: Módulo para registrar actividad y sumar o reiniciar la racha (*streak*) diaria.
-4. **Modificar un usuario**: Submenús específicos para actualizar cualquier campo (nombre, edad, roles, pronombres, etc.).
+4. **Modificar un usuario**: Submenús específicos con tabla comparativa en vivo para actualizar cualquier campo (nombre, edad, roles, pronombres, etc.).
 5. **Eliminar usuario**: Selección y baja de un perfil previa confirmación.
 6. **Importar/Exportar usuario**: Exporta un perfil específico a `.json` o importa uno resolviendo conflictos.
 7. **Importar/Exportar base de datos**: Genera un archivo `.userdb` comprimido con toda la base de datos o restaura uno existente.
 8. **Buscar usuario**: Menú interactivo con filtros combinables (por nombre, fandom, rangos de edad/racha, etc.).
-9. **Salir**: Cierra la aplicación.
+9. **Salir**: Cierra la aplicación liberando los recursos de la base de datos.
 
 ---
 
@@ -81,10 +82,11 @@ UserDB incluye una interfaz CLI completa (`System.CommandLine`) ideal para autom
 | :--- | :--- | :--- |
 | `list` | Lista usuarios (formato normal, `--table` o `--raw`) | `userdb list --table` |
 | `show` | Muestra los detalles de un usuario (`--raw` para JSON puro) | `userdb show -u "mob100"` |
-| `add` | Registra un nuevo usuario | `userdb add -n "Reigen" -f "Mob Psycho" -A 28 -p "Él,He"` |
+| `add` | Registra un nuevo usuario con validación de campos | `userdb add -n "Reigen" -f "Mob Psycho" -A 28 -p "Él,He"` |
 | `modify` | Modifica atributos de un usuario existente | `userdb modify -u "reigen" -A 29 -S "Ocupado"` |
 | `delete` | Elimina un usuario (`--no-confirm` para scripts) | `userdb delete -u "reigen" --no-confirm` |
 | `search` | Filtra usuarios por criterios (`--fast`, `--raw`) | `userdb search -f "Mob Psycho" --min-age 18` |
+| `log` | Inspecciona o monitorea logs en tiempo real (`--live`, `--cat`) | `userdb log --live` |
 | `export` | Exporta individual (`-u`) o todo (`-a`) | `userdb export -a -t "copia.userdb"` |
 | `import` | Importa usuarios con resolución de conflictos (`-m`) | `userdb import -a -t "copia.userdb" -m keep` |
 
@@ -92,9 +94,40 @@ UserDB incluye una interfaz CLI completa (`System.CommandLine`) ideal para autom
 
 ---
 
+### Detalles de Comandos Específicos
+
+#### 🔹 Auditoría y Logs (`log`)
+```bash
+# Monitorear logs en vivo a medida que ocurren eventos
+userdb log --live
+
+# Ver las últimas 20 entradas del registro actual
+userdb log --cat 20
+
+# Ver todo el historial del log de hoy
+userdb log --cat -1
+```
+*Parámetros:*
+- `-l, --live`: Transmite las nuevas entradas de log en tiempo real por consola (detener con `ENTER`).
+- `-c, --cat <n>`: Muestra tantas entradas del registro como se especifique en orden cronológico inverso (`-1` para todas).
+
+#### 🔹 Búsqueda Avanzada (`search`)
+```bash
+# Búsqueda rápida por nombre en memoria
+userdb search -n "Reigen" --fast
+
+# Filtrar por fandom y rango de edad
+userdb search -f "Mob Psycho 100" --min-age 18 --max-age 30
+
+# Búsqueda con salida cruda
+userdb search --status "Activo" --raw
+```
+
+---
+
 ### Conexión e Integración con Otros Programas
 
-Gracias al modificador `--raw` presente en `show`, `list` y `search`, UserDB emite datos limpios (JSON estructurado o texto separado por comas) para encadenarse mediante tuberías (*pipes*):
+Gracias al modificador `--raw` y al subcomando `log`, UserDB emite datos limpios (JSON estructurado o texto separado por comas) para encadenarse mediante tuberías (*pipes*):
 
 #### 1. Procesar datos con `jq`
 Consultar un perfil en formato JSON crudo y extraer o transformar propiedades con `jq`:
@@ -110,7 +143,18 @@ if [ "$ESTADO" = "Activo" ]; then
 fi
 ```
 
-#### 2. Procesar listas con `cut`, `awk` y bucles `while read`
+#### 2. Monitoreo reactivo de logs con `grep`
+Supervisar operaciones críticas en segundo plano:
+
+```bash
+# Filtrar en tiempo real solo los errores generados en el sistema
+userdb log --live | grep --line-buffered "ERROR"
+
+# Consultar advertencias recientes en el registro
+userdb log --cat 50 | grep -i "warning"
+```
+
+#### 3. Procesar listas con `cut`, `awk` y bucles `while read`
 Iterar sobre los usuarios registrados utilizando la salida cruda de `list`:
 
 ```bash
@@ -124,7 +168,7 @@ userdb list --raw | while IFS=',' read -r nombre ruta; do
 done
 ```
 
-#### 3. Búsqueda y filtrado en tuberías (*pipes*)
+#### 4. Búsqueda y filtrado en tuberías (*pipes*)
 Filtrar usuarios por criterios específicos y canalizar los resultados:
 
 ```bash
@@ -135,7 +179,7 @@ userdb search -f "Mob Psycho 100" --raw | wc -l
 userdb search --min-age 18 --raw | cut -d',' -f2 | xargs -n 1 basename -s .json
 ```
 
-#### 4. Automatización de respaldos diarios con `cron`
+#### 5. Automatización de respaldos diarios con `cron`
 Programar una exportación automática empaquetada:
 
 ```bash
@@ -143,7 +187,7 @@ Programar una exportación automática empaquetada:
 userdb export -a -t "$HOME/backups/userdb_$(date +%Y%m%d).userdb"
 ```
 
-#### 5. Integración con Python
+#### 6. Integración con Python
 Consumir UserDB directamente desde un script en Python:
 
 ```python
@@ -201,8 +245,10 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 - **C# / .NET 10.0**: Lenguaje y runtime principal de la aplicación.
 - **System.CommandLine (2.0.10)**: Manejo, parsing y validación de argumentos y subcomandos CLI.
 - **Nanoid (3.1.0)**: Generación de identificadores únicos seguros y compactos.
-- **System.Text.Json**: Serialización y deserialización de perfiles de usuario.
+- **System.Text.Json**: Serialización y deserialización estructurada de perfiles.
 - **System.IO.Compression**: Empaquetado y descompresión ZIP para archivos de base de datos `.userdb`.
+- **FileSystemWatcher & I/O Streams**: Monitoreo y transmisión en tiempo real de eventos de log con detección de cambios y rotación.
+- **Mecanismos de Bloqueo Basados en Archivos**: Control de concurrencia y prevención de condiciones de carrera con PID de proceso (`userdb.lock`).
 - **Bash & PowerShell**: Scripts de instalación rápida (`install.sh`, `install.ps1`) y empaquetado (`export.sh`).
 
 ---
@@ -219,6 +265,7 @@ UserDatabase/
 │   │   ├── ExportCommandBuilder.cs
 │   │   ├── ImportCommandBuilder.cs
 │   │   ├── ListCommandBuilder.cs
+│   │   ├── LogCommandBuilder.cs
 │   │   ├── ModifyCommandBuilder.cs
 │   │   ├── SearchCommandBuilder.cs
 │   │   └── ShowCommandBuilder.cs
@@ -229,6 +276,7 @@ UserDatabase/
 │   ├── ImportDataBase.cs
 │   ├── ImportUser.cs
 │   ├── ListUsers.cs
+│   ├── LogCommand.cs
 │   ├── ModifyUser.cs
 │   ├── SearchUser.cs
 │   └── Show.cs
@@ -249,6 +297,8 @@ UserDatabase/
 │   ├── SearchParameters.cs
 │   └── User.cs
 ├── Services/                     # Servicios centrales y persistencia
+│   ├── DatabaseLock.cs           # Control de concurrencia y bloqueo de BD
+│   ├── LiveLogReader.cs          # Lector en tiempo real con FileSystemWatcher
 │   ├── Logs.cs                   # Auditoría y logging diario
 │   ├── RegenerateIndex.cs        # Reconstrucción del índice users.dat
 │   └── UserService.cs            # I/O de perfiles y resolución de rutas
@@ -269,6 +319,7 @@ UserDatabase/
 - **Directorio de Usuarios**: `~/.userdb/` en Linux / `%USERPROFILE%\.userdb\` en Windows
   - `users.dat`: Índice central de usuarios (`Nombre,RutaJSON`).
   - `<userId>.json`: Archivo individual de datos de cada perfil.
+  - `userdb.lock`: Archivo de control de concurrencia que registra el PID del proceso activo.
 - **Directorio de Logs**: `~/.config/userdb/` en Linux / `%APPDATA%\userdb\` en Windows
   - `LOG-dd-MM-yyyy.log`: Registro diario de operaciones y auditoría.
 

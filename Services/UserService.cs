@@ -8,6 +8,16 @@ public static class UserService
 {
     public static string GPath { get; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".userdb");
     public static string UsersDatPath => Path.Combine(GPath, "users.dat");
+    public static void CheckDatabaseLock(string logTitle)
+    {
+        string lockPath = Path.Combine(GPath, "userdb.lock");
+        if (File.Exists(lockPath) && !File.ReadAllText(lockPath).Contains(Environment.ProcessId.ToString()))
+        {
+            Logs.Log(logTitle, "Base de datos bloqueada.", Logs.logType.Error, 2);
+            DrawText("ERROR: Base de datos bloqueada.", Color.Red);
+            Environment.Exit(2);
+        }
+    }
 
     public static void EnsureDirectoryExists()
     {
@@ -18,10 +28,9 @@ public static class UserService
         }
     }
 
-    public static List<string> GetUserIndexLines(bool regenerateIndex = true)
+    public static List<string> GetUserIndexLines()
     {
         string logtitle = "GetUserIndexLines";
-        if (regenerateIndex) RegenerateIndex.Run(UserService.GPath);
         if (!File.Exists(UsersDatPath))
         {
             Logs.Log(logtitle, "El archivo de índice no existe, a menos que no se hayan registrado usuarios, esto es un bug", Logs.logType.Warning, 2);
@@ -30,7 +39,7 @@ public static class UserService
         return File.ReadAllLines(UsersDatPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
     }
 
-    public static void SaveUser(User newUser)
+    public static void SaveUser(User newUser, bool autoRegenerateIndex = true)
     {
         EnsureDirectoryExists();
 
@@ -57,7 +66,7 @@ public static class UserService
         string userSerialized = JsonSerializer.Serialize(newUser, options);
         File.WriteAllText(path, userSerialized);
         Logs.Log(logTitle, "Actualizando índice...", Logs.logType.Info, 2);
-        RegenerateIndex.Run(GPath);
+        if (autoRegenerateIndex) RegenerateIndex.Run(GPath);
         Logs.Log(logTitle, "Usuario agregado con éxito", Logs.logType.Info, 2);
     }
 
@@ -71,11 +80,10 @@ public static class UserService
         Logs.Log(logTitle, $"Archivo {jsonPath} actualizado exitosamente", Logs.logType.Info, 2);
     }
 
-    public static User? LoadUserFromJson(string jsonPath, bool skipIndex = false)
+    public static User? LoadUserFromJson(string jsonPath)
     {
         const string logTitle = "LoadUserFromJson";
         Logs.Log(logTitle, $"Cargando usuario desde {jsonPath}", Logs.logType.Info, 1);
-        if (!skipIndex) RegenerateIndex.Run(UserService.GPath);
 
         if (!File.Exists(jsonPath))
         {

@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using userdb.Models;
 using userdb.Services;
 using static userdb.ConsoleHelper;
 
@@ -8,7 +9,8 @@ public static class ExportDataBase
 {
     public static void Run(string? path)
     {
-        string logTitle = "ExportDataBase";
+        const string logTitle = "ExportDataBase";
+        UserService.CheckDatabaseLock(logTitle);
         Logs.Log(logTitle, $"Iniciando exportación de base de datos a ruta solicitada: '{path}'", Logs.logType.Info, 2);
 
         if (string.IsNullOrWhiteSpace(path))

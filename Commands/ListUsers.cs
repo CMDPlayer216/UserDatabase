@@ -7,12 +7,13 @@ namespace userdb.Commands;
 
 public static class ListUsers
 {
-    public static void Run(bool isTable, bool isRaw, bool isTheIndexRegenerated = false)
+    public static void Run(bool isTable, bool isRaw)
     {
-        string logTitle = "ListUsers";
-        Logs.Log(logTitle, $"Listando usuarios (isTable: {isTable}, isRaw: {isRaw}, isTheIndexRegenerated: {isTheIndexRegenerated})", Logs.logType.Info, 1);
+        const string logTitle = "ListUsers";
+        UserService.CheckDatabaseLock(logTitle);
+        Logs.Log(logTitle, $"Listando usuarios (isTable: {isTable}, isRaw: {isRaw})", Logs.logType.Info, 1);
 
-        List<string> userLines = GetUserIndexLines(!isTheIndexRegenerated);
+        List<string> userLines = GetUserIndexLines();
         Logs.Log(logTitle, $"Líneas del índice obtenidas: {userLines.Count}", Logs.logType.Info, 1);
 
         if (userLines.Count == 0 && !isRaw)

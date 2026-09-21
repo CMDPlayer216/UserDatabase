@@ -9,7 +9,15 @@ public static class DeleteUser
 {
     public static void Run(string userId, bool noConfirm = false)
     {
-        string logTitle = "DeleteUser";
+        const string logTitle = "DeleteUser";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logTitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
+
         Logs.Log(logTitle, $"Iniciando eliminación de usuario ID: {userId}, noConfirm: {noConfirm}", Logs.logType.Info, 2);
 
         if (!noConfirm)

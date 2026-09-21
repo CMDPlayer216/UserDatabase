@@ -7,6 +7,8 @@ public static class SearchUser
 {
     public static void Run(SearchParameters searchOption)
     {
+        const string logTitle = "SearchUser";
+        UserService.CheckDatabaseLock(logTitle);
         bool fastSearch = searchOption.FastSearch
         && string.IsNullOrEmpty(searchOption.AdditionalRole)
         && string.IsNullOrEmpty(searchOption.Date)
@@ -67,6 +69,9 @@ public static class SearchUser
                 }
             }
 
+            results.Sort();
+            if (searchOption.InverseOrder) results.Reverse();
+
             if (results.Count != 0)
             {
                 foreach (string result in results)
@@ -88,7 +93,7 @@ public static class SearchUser
 
             foreach (string item in index)
             {
-                User? user = UserService.LoadUserFromJson(item.Split(',')[1], true);
+                User? user = UserService.LoadUserFromJson(item.Split(',')[1]);
                 if (user == null) continue;
 
                 string result = $"{Path.GetFileNameWithoutExtension(item.Split(',')[1])}   {item.Split(',')[0]}";
@@ -254,6 +259,9 @@ public static class SearchUser
                     if (match) continue;
                 }
             }
+            
+            results.Sort();
+            if (searchOption.InverseOrder) results.Reverse();
 
             if (results.Count != 0)
             {

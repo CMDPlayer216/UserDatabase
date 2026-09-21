@@ -9,7 +9,8 @@ public static class Show
 {
     public static void Run(string userId, bool isRaw = false)
     {
-        string logTitle = "Show";
+        const string logTitle = "Show";
+        UserService.CheckDatabaseLock(logTitle);
         Logs.Log(logTitle, $"Consultando información de usuario '{userId}' (isRaw: {isRaw})", Logs.logType.Info, 2);
 
         string userPath = Path.Combine(GPath, $"{userId}.json");

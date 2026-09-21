@@ -12,12 +12,11 @@ public static class Program
     static async Task<int> Main(string[] args)
     {
         Logs.Log("Main", $"Iniciando UserDB con argumentos: [{(args.Length > 0 ? string.Join(", ", args) : "sin argumentos")}]", Logs.logType.Info, 2);
-        RegenerateIndex.Run(UserService.GPath);
         // Comando principal
         var rootCommand = new RootCommand("UserDatabase - Sistema de gestión");
 
         // En caso de que se pase sin argumentos
-        rootCommand.SetAction((ParseResult parseResult) => { InteractiveMode(); });
+        rootCommand.SetAction(_ => InteractiveMode());
 
         // Añadirmos los subcomandos al comando principal
         rootCommand.Add(ListCommandBuilder.Create());
@@ -28,6 +27,7 @@ public static class Program
         rootCommand.Add(ExportCommandBuilder.Create());
         rootCommand.Add(ImportCommandBuilder.Create());
         rootCommand.Add(SearchCommandBuilder.Create());
+        rootCommand.Add(LogCommandBuilder.Create());
 
         // Pasar los argumentos de la aplicación al parser
         return await rootCommand.Parse(args).InvokeAsync();
@@ -35,8 +35,16 @@ public static class Program
 
     static void InteractiveMode()
     {
-        Logs.Log("InteractiveMode", "Modo interactivo iniciado", Logs.logType.Info, 2);
-        UserService.EnsureDirectoryExists();
+        const string logTitle = "InteractiveMode";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logTitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
+        RegenerateIndex.Run(UserService.GPath);
+        Logs.Log(logTitle, "Modo interactivo iniciado", Logs.logType.Info, 2);
         Console.Clear();
 
         DrawText(" _   _ ____  _____ ____    ____    _  _____  _    ____    _    ____  _____ ", Color.Yellow);
@@ -45,7 +53,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         DrawText("");
-        DrawText("UserDB v3.2 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v3.3 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {
@@ -63,7 +71,7 @@ public static class Program
 
             string input = TakeInput();
             int.TryParse(input, out int option);
-            Logs.Log("InteractiveMode", $"Opción seleccionada: {option}", Logs.logType.Info, 1);
+            Logs.Log(logTitle, $"Opción seleccionada: {option}", Logs.logType.Info, 1);
 
             try
             {
@@ -94,10 +102,10 @@ public static class Program
                         SearchMenu.Show();
                         break;
                     case 9:
-                        Logs.Log("InteractiveMode", "Saliendo del modo interactivo", Logs.logType.Info, 2);
+                        Logs.Log(logTitle, "Saliendo del modo interactivo", Logs.logType.Info, 2);
                         return;
                     default:
-                        Logs.Log("InteractiveMode", $"Opción no válida ingresada: '{input}'", Logs.logType.Warning, 2);
+                        Logs.Log(logTitle, $"Opción no válida ingresada: '{input}'", Logs.logType.Warning, 2);
                         DrawText("Esa opcion no existe!", Color.Red);
                         break;
                 }

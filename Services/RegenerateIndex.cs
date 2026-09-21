@@ -6,16 +6,16 @@ public static class RegenerateIndex
 {
     public static void Run(string gPath)
     {
-        string logTitle = "RegenerateIndex";
+        const string logTitle = "RegenerateIndex";
         string datPath = Path.Combine(gPath, "users.dat");
 
         Logs.Log(logTitle, $"datPath = {datPath}", Logs.logType.Info, 1);
 
+        UserService.EnsureDirectoryExists();
+
         // 1. Si no existe la carpeta contenedora, no hay nada que escanear
         if (!Directory.Exists(gPath))
         {
-            Logs.Log(logTitle, $"El directorio {gPath} no existe, creando uno nuevo", Logs.logType.Warning, 2);
-            Directory.CreateDirectory(gPath);
             Logs.Log(logTitle, $"El archivo {datPath} no existe, creando uno nuevo", Logs.logType.Warning, 2);
             if (File.Exists(datPath)) File.Delete(datPath);
             return;

@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using userdb.Models;
 using userdb.Services;
 using static userdb.ConsoleHelper;
 
@@ -8,7 +9,14 @@ public static class ImportDataBase
 {
     public static void Run(string source, string mode)
     {
-        string logTitle = "ImportDataBase";
+        const string logTitle = "ImportDataBase";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logTitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
         Logs.Log(logTitle, $"Iniciando importación de base de datos desde '{source}' en modo '{mode}'", Logs.logType.Info, 2);
 
         // Paso 1: Validar que el archivo existe
@@ -52,7 +60,7 @@ public static class ImportDataBase
             foreach (string userFile in userFiles)
             {
                 // Usamos la rutina de carga e importación para cada archivo individual
-                ImportUser.Run(userFile, mode);
+                ImportUser.Run(userFile, mode, false);
                 importedCount++;
             }
 
@@ -78,5 +86,6 @@ public static class ImportDataBase
                 Logs.Log(logTitle, $"Directorio temporal eliminado: {tempDirectory}", Logs.logType.Info, 1);
             }
         }
+        RegenerateIndex.Run(UserService.GPath);
     }
 }

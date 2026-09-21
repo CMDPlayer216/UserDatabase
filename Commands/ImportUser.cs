@@ -7,9 +7,16 @@ namespace userdb.Commands;
 
 public static class ImportUser
 {
-    public static void Run(string source, string mode)
+    public static void Run(string source, string mode, bool autoRegenerateIndex = true)
     {
-        string logTitle = "ImportUser";
+        const string logTitle = "ImportUser";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logTitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
         Logs.Log(logTitle, $"Iniciando importación de usuario desde '{source}' con modo '{mode}'", Logs.logType.Info, 2);
 
         User? user = LoadUserFromJson(source);
@@ -33,7 +40,7 @@ public static class ImportUser
                     DrawText($"El usuario {user.userId} ya existe, omitiendo...", Color.Yellow);
                     return;
                 }
-                SaveUser(user);
+                SaveUser(user, autoRegenerateIndex);
                 Logs.Log(logTitle, $"Modo keep: Usuario {user.userId} guardado", Logs.logType.Info, 2);
                 break;
 
@@ -53,7 +60,7 @@ public static class ImportUser
                     }
                 }
 
-                SaveUser(user);
+                SaveUser(user, autoRegenerateIndex);
                 Logs.Log(logTitle, $"Modo overwrite: Usuario {user.userId} guardado", Logs.logType.Info, 2);
                 break;
 
@@ -70,7 +77,7 @@ public static class ImportUser
                     user2modify.source = user.userId;
                     user2modify.streak = -1;
 
-                    ModifyUser.Run(user2modify);
+                    ModifyUser.Run(user2modify, autoRegenerateIndex);
                 }
                 else
                 {
@@ -96,11 +103,11 @@ public static class ImportUser
                     user2modify.userId = user.userId;
                     user2modify.wantedRolesToAdd = user.wantedRoles;
 
-                    ModifyUser.Run(user2modify);
+                    ModifyUser.Run(user2modify, autoRegenerateIndex);
                 }
                 else
                 {
-                    SaveUser(user);
+                    SaveUser(user, autoRegenerateIndex);
                     Logs.Log(logTitle, $"Modo combine-keeping-new: Usuario nuevo {user.userId} guardado", Logs.logType.Info, 2);
                 }
                 break;

@@ -64,7 +64,7 @@ public static class List
 
             try
             {
-                User? readedUser = LoadUserFromJson(jsonFile, true);
+                User? readedUser = LoadUserFromJson(jsonFile);
                 if (readedUser == null) continue;
 
                 List<string> roles = readedUser.wantedRoles ?? Array.Empty<string>().ToList();

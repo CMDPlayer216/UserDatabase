@@ -10,7 +10,15 @@ public static class AddUser
 {
     public static void Run(string name, List<string> additionalRoles, string fandom, List<string> wantedRoles, int age, List<string> pronouns, int streak, string id, string status)
     {
-        string logTitle = "AddUser";
+        const string logTitle = "AddUser";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logTitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
+
         Logs.Log(logTitle, $"Ejecutando comando AddUser para '{name}'", Logs.logType.Info, 2);
 
         User newUser = new();

@@ -9,7 +9,8 @@ public static class ExportUser
 {
     public static void Run(string? userId, string? path)
     {
-        string logTitle = "ExportUser";
+        const string logTitle = "ExportUser";
+        UserService.CheckDatabaseLock(logTitle);
         Logs.Log(logTitle, $"Iniciando exportación de usuario ID: '{userId}' a ruta: '{path}'", Logs.logType.Info, 2);
 
         string userPath = Path.Combine(UserService.GPath, $"{userId}.json");

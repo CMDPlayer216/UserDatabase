@@ -7,9 +7,16 @@ namespace userdb.Commands;
 
 public static class ModifyUser
 {
-    public static void Run(ModifyingUser inputUser)
+    public static void Run(ModifyingUser inputUser, bool autoRegenerateIndex = true)
     {
-        string logtitle = "ModifyUsers";
+        const string logtitle = "ModifyUsers";
+        using var dbLock = new DatabaseLock(UserService.GPath);
+        if (!dbLock.Acquire())
+        {
+            DrawText("ERROR: la base de datos está bloqueada.", Color.Red);
+            Logs.Log(logtitle, "Base de datos bloqueada", Logs.logType.Error, 2);
+            Environment.Exit(2);
+        }
         inputUser.source = string.Concat(inputUser.source.Split(Path.GetInvalidFileNameChars())).Replace(",", "");
         Logs.Log(logtitle, $"Leyendo usuario a modificar: {inputUser.source}", Logs.logType.Info, 3);
         User? user = LoadUserFromJson(Path.Combine(GPath, $"{inputUser.source}.json"));
@@ -130,7 +137,7 @@ public static class ModifyUser
         }
 
         UpdateUserJson(Path.Combine(GPath, $"{user.userId}.json"), user);
-        RegenerateIndex.Run(GPath);
+        if (autoRegenerateIndex) RegenerateIndex.Run(GPath);
         Logs.Log(logtitle, $"Usuario {user.userId} ({user.name}) modificado exitosamente", Logs.logType.Info, 2);
         DrawText("Usuario modificado con éxito!", Color.Green);
     }

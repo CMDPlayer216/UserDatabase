@@ -1,6 +1,5 @@
 using System.Text.Json;
 using userdb.Models;
-using static userdb.ConsoleHelper;
 
 namespace userdb.Services;
 
@@ -11,7 +10,7 @@ public static class UserService
     public static void CheckDatabaseLock(string logTitle)
     {
         string lockPath = Path.Combine(GPath, "userdb.lock");
-        if (File.Exists(lockPath) && !File.ReadAllText(lockPath).Contains(Environment.ProcessId.ToString()))
+        if (File.Exists(lockPath) && int.TryParse(File.ReadAllText(lockPath), out int lockPID) && lockPID != Environment.ProcessId)
         {
             Logs.Log(logTitle, "Base de datos bloqueada.", Logs.logType.Error, 2);
             DrawText("ERROR: Base de datos bloqueada.", Color.Red);
@@ -30,22 +29,22 @@ public static class UserService
 
     public static List<string> GetUserIndexLines()
     {
-        string logtitle = "GetUserIndexLines";
+        const string logtitle = "GetUserIndexLines";
         if (!File.Exists(UsersDatPath))
         {
             Logs.Log(logtitle, "El archivo de índice no existe, a menos que no se hayan registrado usuarios, esto es un bug", Logs.logType.Warning, 2);
-            return Array.Empty<string>().ToList();
+            return [];
         }
-        return File.ReadAllLines(UsersDatPath).Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
+        return [.. File.ReadAllLines(UsersDatPath).Where(l => !string.IsNullOrWhiteSpace(l))];
     }
 
     public static void SaveUser(User newUser, bool autoRegenerateIndex = true)
     {
         EnsureDirectoryExists();
 
-        string logTitle = "SaveUser";
+        const string logTitle = "SaveUser";
 
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        JsonSerializerOptions options = new() { WriteIndented = true };
 
         string path = Path.Combine(GPath, $"{newUser.userId}.json");
         Logs.Log(logTitle, $"Nueva ruta de usuario ({path}) será registrada", Logs.logType.Info, 2);
@@ -72,9 +71,9 @@ public static class UserService
 
     public static void UpdateUserJson(string jsonPath, User user)
     {
-        string logTitle = "UpdateUserJson";
+        const string logTitle = "UpdateUserJson";
         Logs.Log(logTitle, $"Actualizando archivo JSON de usuario en {jsonPath}", Logs.logType.Info, 2);
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        JsonSerializerOptions options = new() { WriteIndented = true };
         string updatedJson = JsonSerializer.Serialize(user, options);
         File.WriteAllText(jsonPath, updatedJson);
         Logs.Log(logTitle, $"Archivo {jsonPath} actualizado exitosamente", Logs.logType.Info, 2);

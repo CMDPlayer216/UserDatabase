@@ -194,6 +194,7 @@ public static class AddUserMenu
                 break;
             }
             if (!UserValidators.ValidateId(inp)) DrawText("Esa ID no es válida!", Color.Red);
+            else valid = true;
         }
         userId = inp;
         inp = "";

@@ -20,7 +20,8 @@ public class DatabaseLock : IDisposable
 
     public bool Acquire()
     {
-        
+        UserService.EnsureDirectoryExists();
+
         if (File.Exists(_lockFilePath))
         {
             // 1. Verificar si el lock pertenece a ESTE MISMO proceso

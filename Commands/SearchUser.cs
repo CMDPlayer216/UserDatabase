@@ -44,7 +44,7 @@ public static class SearchUser
                         results.Add($"{Path.GetFileNameWithoutExtension(line.Split(',')[1])}   {line.Split(',')[0]}");
                         continue;
                     }
-                    if (searchOption.Id != null && line.Split(',')[1] == searchOption.Id)
+                    if (searchOption.Id != null && Path.GetFileNameWithoutExtension(line.Split(',')[1]) == searchOption.Id)
                     {
                         results.Add($"{Path.GetFileNameWithoutExtension(line.Split(',')[1])}   {line.Split(',')[0]}");
                         continue;
@@ -54,7 +54,7 @@ public static class SearchUser
                         results.Add($"{Path.GetFileNameWithoutExtension(line.Split(',')[1])}   {line.Split(',')[0]}");
                         continue;
                     }
-                    if (searchOption.Id != null && line.Contains(searchOption.Id))
+                    if (searchOption.Id != null && Path.GetFileNameWithoutExtension(line.Split(',')[1]).Contains(searchOption.Id))
                     {
                         results.Add($"{Path.GetFileNameWithoutExtension(line.Split(',')[1])}   {line.Split(',')[0]}");
                         continue;
@@ -65,7 +65,7 @@ public static class SearchUser
             {
                 foreach (string line in index)
                 {
-                    if (line.Contains(searchOption.Name ?? "") || line.Contains(searchOption.Id ?? "")) results.Add(line);
+                    if (line.Split(',')[0].Contains(searchOption.Name ?? "") || Path.GetFileNameWithoutExtension(line.Split(',')[1]).Contains(searchOption.Id ?? "")) results.Add(line);
                 }
             }
 
@@ -106,27 +106,24 @@ public static class SearchUser
                     results.Add(result);
                     continue;
                 }
-                if (searchOption.MinAge != -1 && user.age >= searchOption.MinAge)
+
+                bool isAgeInRange = searchOption.MaxAge != -1 && searchOption.MinAge != -1 && searchOption.MaxAge >= user.age && user.age >= searchOption.MinAge;
+
+                if (isAgeInRange)
                 {
                     results.Add(result);
                     continue;
                 }
-                if (searchOption.MaxAge != -1 && searchOption.MaxAge >= user.age)
-                {
-                    results.Add(result);
-                    continue;
-                }
+
                 if (searchOption.Streak != -1 && searchOption.Streak == user.streak)
                 {
                     results.Add(result);
                     continue;
                 }
-                if (searchOption.MinStreak != -1 && user.streak >= searchOption.MinStreak)
-                {
-                    results.Add(result);
-                    continue;
-                }
-                if (searchOption.MaxStreak != -1 && searchOption.MaxStreak >= user.streak)
+
+                bool isStreakInRange = searchOption.MinStreak != -1 && searchOption.MaxStreak != -1 && user.streak >= searchOption.MinStreak && searchOption.MaxStreak >= user.streak;
+
+                if (isStreakInRange)
                 {
                     results.Add(result);
                     continue;
@@ -162,12 +159,10 @@ public static class SearchUser
                     results.Add(result);
                     continue;
                 }
-                if (searchOption.MinDate != null && DateOnly.Parse(searchOption.MinDate) >= user.dateRegistered)
-                {
-                    results.Add(result);
-                    continue;
-                }
-                if (searchOption.MaxDate != null && user.dateRegistered >= DateOnly.Parse(searchOption.MaxDate))
+
+                bool isDateInRange = searchOption.MinDate != null && DateOnly.Parse(searchOption.MinDate) >= user.dateRegistered && searchOption.MaxDate != null && user.dateRegistered >= DateOnly.Parse(searchOption.MaxDate);
+
+                if (isDateInRange)
                 {
                     results.Add(result);
                     continue;
@@ -208,7 +203,7 @@ public static class SearchUser
                     results.Add(result);
                     continue;
                 }
-                if (searchOption.AdditionalRole != null && user.pronouns.Contains(searchOption.AdditionalRole))
+                if (searchOption.AdditionalRole != null && user.additionalRoles.Contains(searchOption.AdditionalRole))
                 {
                     results.Add(result);
                     continue;
@@ -259,7 +254,7 @@ public static class SearchUser
                     if (match) continue;
                 }
             }
-            
+
             results.Sort();
             if (searchOption.InverseOrder) results.Reverse();
 

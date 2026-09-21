@@ -53,7 +53,7 @@ public static class Program
         DrawText("| |_| |___) | |___|  _ <  | |_| / ___ \\| |/ ___ \\| |_) / ___ \\ ___) | |___", Color.DarkRed);
         DrawText(" \\___/|____/|_____|_| \\_\\ |____/_/   \\_\\_/_/   \\_\\____/_/   \\_\\____/|_____|", Color.Red);
         DrawText("");
-        DrawText("UserDB v3.3 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
+        DrawText("UserDB v3.3.1 - Copyright (c) 2026 CMDPlayer216", Color.Gray);
 
         while (true)
         {

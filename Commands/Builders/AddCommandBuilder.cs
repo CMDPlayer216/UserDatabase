@@ -1,7 +1,6 @@
 using System.CommandLine;
-using NanoidDotNet;
-using userdb.Commands;
 using userdb.Services;
+using userdb.Validators;
 
 namespace userdb.Commands.Builders;
 
@@ -46,12 +45,12 @@ public static class AddCommandBuilder
             Description = "Racha del usuario",
             DefaultValueFactory = _ => 0
         };
-        Option<string>? userIdOption = new Option<string>("--user-id", "-u")
+        Option<string>? userIdOption = new("--user-id", "-u")
         {
             Description = "ID del usuario",
             DefaultValueFactory = _ => Nanoid.Generate(size: 12)
         };
-        var status = new Option<string>("--status", "-S")
+        var statusOption = new Option<string>("--status", "-S")
         {
             Description = "Estado del usuario",
             DefaultValueFactory = _ => "Activo"
@@ -65,9 +64,9 @@ public static class AddCommandBuilder
         addCommand.Add(pronounsOption);
         addCommand.Add(streakOption);
         addCommand.Add(userIdOption);
-        addCommand.Add(status);
+        addCommand.Add(statusOption);
 
-        addCommand.SetAction((ParseResult parseResult) =>
+        addCommand.SetAction(parseResult =>
         {
             Logs.Log("AddCommandBuilder", "Ejecutando subcomando CLI 'add'", Logs.logType.Info, 2);
             string name = parseResult.GetValue(nameOption) ?? "Desconocido";                 // Limpiamos la entrada de la opción -n / --name de forma inicial
@@ -75,18 +74,76 @@ public static class AddCommandBuilder
             string fandom = parseResult.GetValue(fandomOption) ?? "Desconocido";             // Limpiamos la entrada de la opción -f / --fandom de forma inicial
             string lookedCharacters = parseResult.GetValue(lookedCharactersOption) ?? "";    // Limpiamos la entrada de la opción -l / --looked-characters de forma inicial
             string pronouns = parseResult.GetValue(pronounsOption) ?? "";                    // Limpiamos la entrada de la opción -p / --pronouns de forma inicial
-            string userid = parseResult.GetValue(userIdOption) ?? Guid.NewGuid().ToString(); // Limpiamos la entrada de la opcion -u / --user-id de forma inicial
+            string userid = parseResult.GetValue(userIdOption) ?? Nanoid.Generate(size: 12); // Limpiamos la entrada de la opcion -u / --user-id de forma inicial
+            int age = parseResult.GetValue(ageOption);
+            int streak = parseResult.GetValue(streakOption);
+            string status = parseResult.GetValue(statusOption) ?? "Activo";
+
+            if (!UserValidators.ValidateId(userid))
+            {
+                DrawText("El ID no es válido");
+                return;
+            }
+            if (!UserValidators.ValidateName(name))
+            {
+                DrawText("El nombre no es válido");
+                return;
+            }
+            foreach (string rol in additionalRoles.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (!UserValidators.ValidateRole(rol))
+                {
+                    DrawText($"El rol \"{rol}\" es inválido");
+                    return;
+                }
+            }
+            if (!UserValidators.ValidateFandom(fandom))
+            {
+                DrawText("El fandom no es válido");
+                return;
+            }
+            foreach (string rol in lookedCharacters.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (!UserValidators.ValidateRole(rol))
+                {
+                    DrawText($"El rol \"{rol}\" es inválido");
+                    return;
+                }
+            }
+            if (UserValidators.ValidateAge(age) is not true)
+            {
+                DrawText("La edad no es válida");
+                return;
+            }
+            foreach (string pronoun in pronouns.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (!UserValidators.ValidateRole(pronoun))
+                {
+                    DrawText($"El pronombre \"{pronoun}\" es inválido");
+                    return;
+                }
+            }
+            if (UserValidators.ValidateStreak(streak) is not true)
+            {
+                DrawText("La racha no es válida");
+                return;
+            }
+            if (!UserValidators.ValidateStatus(status))
+            {
+                DrawText("El ID no es válido");
+                return;
+            }
 
             AddUser.Run(                                                                                        // Le pasamos el control a Commands.AddUser() que añadirá la información según se haya especificado
                 string.Concat(name.Split(Path.GetInvalidFileNameChars())).Replace(",", ""),                          // Terminamos de limpiar la entrada de -n / --name
-                additionalRoles.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),  // Terminamos de limpiar la entrada de -a / --aditional-roles
+                [.. additionalRoles.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)],  // Terminamos de limpiar la entrada de -a / --aditional-roles
                 fandom,                                                                                              // Pasamos la opcion -f / --fandom
-                lookedCharacters.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(), // Terminamos de limpiar la entrada de -l / --looked-characters
-                parseResult.GetValue(ageOption),                                                                     // Pasamos la opcion -A / --age
-                pronouns.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList(),         // Terminamos de limpiar la entrada de -p / --pronouns
-                parseResult.GetValue(streakOption),                                                                  // Pasamos la opcion -s / --streak
+                [.. lookedCharacters.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)], // Terminamos de limpiar la entrada de -l / --looked-characters
+                age,                                                                     // Pasamos la opcion -A / --age
+                [.. pronouns.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)],         // Terminamos de limpiar la entrada de -p / --pronouns
+                streak,                                                                  // Pasamos la opcion -s / --streak
                 userid,                                                                                              // Pasamos la opcion -u / --user-id
-                parseResult.GetValue(status) ?? "Activo"                                                             // Pasamos la opcion -S / --status
+                status                                                            // Pasamos la opcion -S / --status
                 );
         });
 

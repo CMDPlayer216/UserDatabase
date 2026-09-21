@@ -1,7 +1,6 @@
-using NanoidDotNet;
 using userdb.Models;
 using userdb.Services;
-using static userdb.ConsoleHelper;
+using userdb.Validators;
 using static userdb.Services.UserService;
 
 namespace userdb.Commands;
@@ -11,6 +10,7 @@ public static class AddUser
     public static void Run(string name, List<string> additionalRoles, string fandom, List<string> wantedRoles, int age, List<string> pronouns, int streak, string id, string status)
     {
         const string logTitle = "AddUser";
+
         using var dbLock = new DatabaseLock(UserService.GPath);
         if (!dbLock.Acquire())
         {

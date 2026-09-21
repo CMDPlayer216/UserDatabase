@@ -160,7 +160,7 @@ public static class SearchUser
                     continue;
                 }
 
-                bool isDateInRange = searchOption.MinDate != null && DateOnly.Parse(searchOption.MinDate) >= user.dateRegistered && searchOption.MaxDate != null && user.dateRegistered >= DateOnly.Parse(searchOption.MaxDate);
+                bool isDateInRange = searchOption.MinDate != null && searchOption.MaxDate != null && DateOnly.Parse(searchOption.MaxDate) >= user.dateRegistered && user.dateRegistered >= DateOnly.Parse(searchOption.MinDate);
 
                 if (isDateInRange)
                 {

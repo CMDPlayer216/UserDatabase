@@ -1,4 +1,4 @@
-# UserDB v3.3
+# UserDB v3.3.1
 
 **UserDB** es una herramienta de gestión de perfiles de usuario ligera, rápida y estructurada para la terminal, desarrollada en C# y .NET. Permite administrar información personal, roles, fandoms, pronombres, seguimiento de rachas (*streaks*) diarias, búsquedas avanzadas, auditoría continua y operaciones de importación/exportación de bases de datos completas.
 
